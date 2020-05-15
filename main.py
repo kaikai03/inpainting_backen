@@ -1,22 +1,46 @@
 from typing import List
 from fastapi import FastAPI, Path, Query, Header, Request
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 import uvicorn as u
 import time
+from pydantic import BaseModel
 
 app = FastAPI()
 
+# request need "Origin"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=['*'],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    max_age=999
 )
+
+@app.middleware("http")
+async def my_middleware(request: Request, call_next):
+    headers = request.headers
+    print("middleware",headers)
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+
+
+@app.options("/")
+async def options():
+    return {"message": "options"}
+
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.post("/p")
+async def root():
+    return {"message": "p"}
 
 
 @app.get("/head")
@@ -29,15 +53,20 @@ async def read_all(*, request: Request):
     return {"request.headers": request.headers}
 
 
-@app.middleware("http")
-async def my_middleware(request: Request, call_next):
-    headers = request.headers
-    print("middleware",headers)
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
+
+
+
+class Item(BaseModel):
+    name: str
+    description: str = None
+    price: float
+    tax: float = None
+    tags: List[str] = []
+
+
+@app.post("/items/", response_model=Item)
+async def create_item(item: Item):
+    return item
 
 
 if __name__ == '__main__':
