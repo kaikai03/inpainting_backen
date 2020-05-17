@@ -14,6 +14,11 @@ import uvicorn as u
 import time
 from pydantic import BaseModel
 
+from tinydb import TinyDB, Query
+# db = TinyDB('./db.json')
+# db.insert({'int': 1, 'char': 'a'})
+# db.insert({'int': 1, 'char': 'b'})
+
 app = FastAPI()
 
 # request need "Origin"
