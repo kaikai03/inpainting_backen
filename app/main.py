@@ -1,27 +1,22 @@
-from typing import List
-from fastapi import FastAPI, Depends, Path, Query, Header, Request, status, File, UploadFile, Form, HTTPException
-# from fastapi.responses import HTMLResponse
-# from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Depends, Header, Request, HTTPException
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import HTMLResponse, JSONResponse
 from fastapi.exception_handlers import ( http_exception_handler, request_validation_exception_handler, )
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from fastapi.encoders import jsonable_encoder
 
 import uvicorn as u
 import time
-from pydantic import BaseModel
 
-from routers import root, user
+from app.routers import root
+from app.routers import user
 
-from tinydb import TinyDB, Query
-# db = TinyDB('./db.json')
-# db.insert([{'id': 1, 'type': 'a','name':'carry'},{'id': 2, 'type': 'b','name':'tomas'}])
-# Q = Query()
-# db.search(Q.type == 'a')
-# db.update({'名字':'苹果'}, Q.名字 =='桃子')
+import app.global_db as db
+print("main1", db.db1)
+db.db1 = 'main'
+print("main2", db.db1)
+
+
 
 app = FastAPI()
 
@@ -34,6 +29,8 @@ app.add_middleware(
     allow_headers=["*"],
     max_age=999
 )
+
+
 
 @app.middleware("http")
 async def my_middleware(request: Request, call_next):
@@ -49,7 +46,7 @@ async def my_middleware(request: Request, call_next):
 async def get_token_header(x_token: str = Header(None)):
     if x_token is not None:
         raise HTTPException(status_code=400, detail="X-Token header invalid")
-
+    return "main"
 
 app.include_router(
     root.router,
@@ -58,6 +55,15 @@ app.include_router(
     responses={404: {"description": "Not found"}},
 )
 
+
+class DB:
+    def __init__(self):
+        pass
+
+    async def __call__(self):
+        return "main"
+
+
 app.include_router(
     user.router,
     prefix="/users",
@@ -65,6 +71,7 @@ app.include_router(
     dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
+
 
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request, exc):

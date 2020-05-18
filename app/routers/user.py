@@ -12,14 +12,22 @@ from fastapi.encoders import jsonable_encoder
 
 from pydantic import BaseModel
 
+from fastapi import Depends
 from fastapi import APIRouter
+import app.global_db as db
+
+
 
 router = APIRouter()
 
 
 @router.get("/", tags=["users"])
-async def read_users():
-    return [{"username": "Foo"}, {"username": "Bar"}]
+def read_users():
+    try:
+        print("sub:", db.db1)
+    except BaseException as e:
+        print(e)
+    return [{"username": db.db1}, {"username": "Bar"}]
 
 
 @router.get("/me", tags=["users"])
