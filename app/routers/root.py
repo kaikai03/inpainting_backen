@@ -9,6 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from fastapi import APIRouter
+from app.global_db import db
 
 router = APIRouter()
 
@@ -19,6 +20,7 @@ async def options():
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def root():
+    print(db.base)
     # 使用Response包装时，将无视装饰器中的status
     return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content={"message": "Hello World"})
 

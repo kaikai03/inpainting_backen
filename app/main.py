@@ -11,7 +11,7 @@ import time
 from app.routers import root
 from app.routers import user
 
-import app.global_db as db
+import app.global_db
 
 
 
