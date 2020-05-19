@@ -33,7 +33,7 @@ def sync(lock):
     # 用于数据编辑的锁。本项目几乎全异步函数，以防万一加个锁，
     # 反正暂时运算密集的部分都会分布出去，本项目没有耗时计算。
     def sync_lock(fn):
-        def new_Fn(*args, **kwargs):
+        def new_fn(*args, **kwargs):
             lock.acquire()
             print("db_lock:",fn.__name__)
             try:
@@ -41,9 +41,9 @@ def sync(lock):
             finally:
                 lock.release()
                 print("db_unlock")
-        new_Fn.__name__ = fn.__name__
-        new_Fn.__doc__ = fn.__doc__
-        return new_Fn
+        new_fn.__name__ = fn.__name__
+        new_fn.__doc__ = fn.__doc__
+        return new_fn
     return sync_lock
 
 
