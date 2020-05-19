@@ -12,9 +12,7 @@ from app.routers import root
 from app.routers import user
 
 import app.global_db as db
-print("main1", db.db1)
-db.db1 = 'main'
-print("main2", db.db1)
+
 
 
 

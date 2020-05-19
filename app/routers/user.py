@@ -23,11 +23,7 @@ router = APIRouter()
 
 @router.get("/", tags=["users"])
 def read_users():
-    try:
-        print("sub:", db.db1)
-    except BaseException as e:
-        print(e)
-    return [{"username": db.db1}, {"username": "Bar"}]
+    return [{"username": "sub"}, {"username": "Bar"}]
 
 
 @router.get("/me", tags=["users"])
