@@ -10,7 +10,6 @@ import time
 
 from app.routers import root
 from app.routers import user
-print("main")
 import app.constants as con
 
 

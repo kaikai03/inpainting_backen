@@ -41,19 +41,21 @@ async def read_all(*, request: Request):
     return {"request.headers": request.headers}
 
 
-class video_items(BaseModel):
-    name: str
+class video_item(BaseModel):
+    name: str = None
     description: str = None
     price: float = 999
-    tax: float = None
-    tags: List[str] = []
 
 
-@router.get("/random/{count}",response_model=List[video_items])
+@router.get("/random/{count}",response_model=List[video_item])
 async def read_all(*, count: int):
-
-    return count
-
+    t = video_item()
+    t.name = 'a'
+    t.description = "sss"
+    t.price = 121
+    t2 = video_item()
+    t2.name = 'b'
+    return [t,t2]
 
 
 class Item(BaseModel):
