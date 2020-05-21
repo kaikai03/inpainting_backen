@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from fastapi import Depends
 from fastapi import APIRouter
-from app.global_db import db
+import app.constants as con
 
 
 router = APIRouter()
@@ -22,7 +22,7 @@ router = APIRouter()
 
 @router.get("/", tags=["users"])
 def read_users():
-    print(db.base)
+    print(con.db.base)
     return [{"username": "sub"}, {"username": "Bar"}]
 
 

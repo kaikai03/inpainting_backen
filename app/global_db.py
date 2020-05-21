@@ -130,6 +130,7 @@ class DB(object):
 db = DB()
 
 
+
 # db.insert_multiple([{'id': 1, 'type': 'a','name':'carry'},{'id': 2, 'type': 'b','name':'tomas'}])
 # db.insert({'id': 9, 'type': 'c','name':'cfff'})
 # db.upsert({'id': 9, 'type': 'e','name':'cfff'},Q.id ==9)

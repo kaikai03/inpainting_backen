@@ -9,7 +9,8 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from fastapi import APIRouter
-from app.global_db import db
+import app.constants as con
+
 
 router = APIRouter()
 
@@ -20,7 +21,7 @@ async def options():
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def root():
-    print(db.base)
+    print(con.db.base)
     # 使用Response包装时，将无视装饰器中的status
     return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content={"message": "Hello World"})
 
@@ -40,13 +41,25 @@ async def read_all(*, request: Request):
     return {"request.headers": request.headers}
 
 
+class video_items(BaseModel):
+    name: str
+    description: str = None
+    price: float = 999
+    tax: float = None
+    tags: List[str] = []
+
+
+@router.get("/random/{count}",response_model=List[video_items])
+async def read_all(*, count: int):
+
+    return count
 
 
 
 class Item(BaseModel):
     name: str
     description: str = None
-    price: float
+    price: float = 999
     tax: float = None
     tags: List[str] = []
 

@@ -10,8 +10,8 @@ import time
 
 from app.routers import root
 from app.routers import user
-
-import app.global_db
+print("main")
+import app.constants as con
 
 
 
@@ -54,12 +54,6 @@ app.include_router(
 )
 
 
-class DB:
-    def __init__(self):
-        pass
-
-    async def __call__(self):
-        return "main"
 
 
 app.include_router(
@@ -73,13 +67,13 @@ app.include_router(
 
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request, exc):
-    print(f"OMG! An HTTP error!: {exc}")
+    print(f"An HTTP error!: {exc}")
     return await http_exception_handler(request, exc)
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
-    print(f"OMG! The client sent invalid data!: {exc}")
+    print(f" The client sent invalid data!: {exc}")
     return await request_validation_exception_handler(request, exc)
 
 # raise HTTPException(status_code=418, detail="Nope! I don't like 3.")
