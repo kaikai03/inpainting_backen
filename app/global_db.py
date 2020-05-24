@@ -1,6 +1,6 @@
 __base_table__ = 'base'
 __workqueue_table__ = 'workqueue'
-__history_table__ = 'history'
+__completed_table__ = 'completed'
 __trash_table__ = 'trash'
 
 
@@ -117,7 +117,7 @@ class DB(object):
     base = db_.table(__base_table__)
 
     workqueue = db_.table(__workqueue_table__)
-    history = db_.table(__history_table__)
+    completed = db_.table(__completed_table__)
     trash = db_.table(__trash_table__)
     print('TinyDB initial completed')
 
@@ -161,6 +161,6 @@ db = DB()
 # db.table('_default').all()
 #
 # len(db)
-# len(history_tb)
+# len(completed_tb)
 # db.count(Q.id.exists())
 # base_tb.name

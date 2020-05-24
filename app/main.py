@@ -12,8 +12,7 @@ from app.routers import root
 from app.routers import user
 import app.constants as con
 
-
-
+from app.routers import temporary
 
 app = FastAPI()
 
@@ -26,7 +25,6 @@ app.add_middleware(
     allow_headers=["*"],
     max_age=999
 )
-
 
 
 @app.middleware("http")
@@ -52,15 +50,18 @@ app.include_router(
     responses={404: {"description": "Not found"}},
 )
 
-
-
-
 app.include_router(
     user.router,
     prefix="/users",
     tags=["users"],
     dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
+)
+
+app.include_router(
+    user.router,
+    prefix="/test",
+    tags=["test"],
 )
 
 

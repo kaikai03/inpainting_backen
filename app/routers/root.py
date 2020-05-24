@@ -14,108 +14,41 @@ import app.constants as con
 
 router = APIRouter()
 
-@router.options("/")
-async def options():
-    return {"message": "options"}
-
-
-@router.get("/", status_code=status.HTTP_200_OK)
-async def root():
-    print(con.db.base)
-    # 使用Response包装时，将无视装饰器中的status
-    return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content={"message": "Hello World"})
-
-
-@router.post("/p")
-async def root():
-    return {"message": "p"}
-
-
-@router.get("/head")
-async def read_items(*, user_agent: str = Header(None), x_token: List[str] = Header(None)):
-    return {"User-Agent": user_agent}
-
-
-@router.get("/headall/")
-async def read_all(*, request: Request):
-    return {"request.headers": request.headers}
-
 
 class video_item(BaseModel):
+    index: int = None
     name: str = None
+    type: str = 0
     description: str = None
-    price: float = 999
+    cover: str
+    src: str = None
 
 
-@router.get("/random/{count}",response_model=List[video_item])
+@router.get("/random_final/{count}", response_model=List[video_item])
 async def read_all(*, count: int):
-    t = video_item()
-    t.name = 'a'
-    t.description = "sss"
-    t.price = 121
-    t2 = video_item()
-    t2.name = 'b'
-    return [t,t2]
+    t = video_item(index=0, cover='http://127.0.0.1:90/imgs/1.jpg',src='http://127.0.0.1:90/v/1.mp4')
+    t2 = video_item(index=1, cover='http://127.0.0.1:90/imgs/2.jpg',src='http://127.0.0.1:90/v/2.mp4')
+    t3 = video_item(index=2, cover='http://127.0.0.1:90/imgs/3.gif', src='http://127.0.0.1:90/v/3.mp4')
+
+    return [t,t2,t3]
 
 
-class Item(BaseModel):
-    name: str
-    description: str = None
-    price: float = 999
-    tax: float = None
-    tags: List[str] = []
+@router.get("/random/{count}")
+async def test(*, count: int):
+    # test_ = [{"index":0,"type":"0","img":"http://127.0.0.1:90/imgs/1.jpg","media":"http://127.0.0.1:90/v/1.mp4"},
+    #             {"index":1,"type":"1","img":"http://127.0.0.1:90/imgs/2.jpg","media":"http://127.0.0.1:90/v/2.mp4"},
+    #             {"index":2,"type":"1","img":"http://127.0.0.1:90/imgs/3.gif","media":"http://127.0.0.1:90/v/3.mp4"}]
+    # return test_
+    t = video_item(index=0, cover='http://127.0.0.1:90/imgs/1.jpg', src='http://127.0.0.1:90/v/1.mp4')
+    t2 = video_item(index=1, cover='http://127.0.0.1:90/imgs/2.jpg', src='http://127.0.0.1:90/v/2.mp4')
+    t3 = video_item(index=2, cover='http://127.0.0.1:90/imgs/3.gif', src='http://127.0.0.1:90/v/3.mp4')
+    return [t, t2, t3]
 
-fake_db = {}
-@router.post("/items/", response_model=Item)
-async def create_item(item: Item):
-    if item is None:
-        raise HTTPException(status_code=405, detail="Item not found", headers={"X-Error": "There goes my error"})
-    json_compatible_item_data = jsonable_encoder(item)
-    fake_db[id] = json_compatible_item_data
-    return item
-
-
-@router.get("/index")
-async def main():
-    content = """
-            <body>
-            <form action="/files/" enctype="multipart/form-data" method="post">
-            <input name="files" type="file" multiple>
-            <input type="submit">
-            </form>
-            <form action="/uploadfiles/" enctype="multipart/form-data" method="post">
-            <input name="files" type="file" multiple>
-            <input type="submit">
-            </form>
-            <form action="/files3/" enctype="multipart/form-data" method="post">
-            <input name="file" type="file">
-            <input name="fileb" type="file">
-            <input name="token" type="text">
-            <input type="submit">
-            </form>
-            </body>
-             """
-    return HTMLResponse(content=content)
+@router.get("/dbtest/")
+async def init_db():
+    con.global_db.history
+    return "ok"
 
 
-@router.post("/files/")
-async def create_files(files: List[bytes] = File(...)):
-    return {"file_sizes": [len(file) for file in files]}
-
-
-@router.post("/uploadfiles/")
-async def create_upload_files(files: List[UploadFile] = File(...)):
-    # filename  content_type  file   await{write(data), read(size), seek(offset), close()}
-    return {"filenames": [file.filename for file in files]}
-
-
-@router.post("/files3/")
-async def create_file(
- file: bytes = File(...), fileb: UploadFile = File(...), token: str = Form(...)):
-    return {
-        "file_size": len(file),
-        "token": token,
-        "fileb_content_type": fileb.content_type,
-    }
 
 
