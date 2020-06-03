@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import app.constants as con
 from fastapi import FastAPI, Path, Query, Header, Request, status, File, UploadFile, Form, HTTPException
 # from fastapi.responses import HTMLResponse
-from starlette.responses import HTMLResponse, JSONResponse
+from starlette.responses import HTMLResponse, JSONResponse, FileResponse
 
 
 from fastapi.encoders import jsonable_encoder
@@ -18,7 +18,7 @@ from fastapi import APIRouter
 router = APIRouter()
 
 
-class video_item(BaseModel):
+class task_item(BaseModel):
     item_id: int = None
     index: int = None
     name: str = None
@@ -29,15 +29,25 @@ class video_item(BaseModel):
     src: List[str] = None
 
 
-@router.get("/random/{count}", response_model=List[video_item])
-async def rand_video(*, count: int):
+@router.get("/random/{count}", response_model=List[task_item])
+async def rand_tasks(*, count: int):
     items = con.global_db.get_random(count)
-    videos = []
+    tasks = []
     for index, item in enumerate(items):
-        v = video_item(**item)
+        v = task_item(**item)
         v.index = index
-        videos.append(v)
-    return videos
+        tasks.append(v)
+    return tasks
+
+
+@router.get("/cover/{name}")
+async def get_cover(*, name: str):
+    return FileResponse(con.root_folder + con.img_folder + name)
+
+
+@router.get("/v/{v_name}")
+async def get_video(*, v_name: str):
+    return FileResponse(con.root_folder + con.video_folder + v_name)
 
 
 # con.global_db.workqueue.remove(con.query.item_id.exists())
