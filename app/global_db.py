@@ -155,10 +155,10 @@ class DB(object):
         print('TinyDB __init__ completed')
 
     @staticmethod
-    def work_finish(doc_id: str, file_type: str = 'video'):
+    def work_finish(doc_id: str, work_status: Union['pic', 'video', 'error'] = 'video'):
         items = DB.workqueue.search(DB.query.doc == doc_id)
         for item in items:
-            item['type'] = file_type
+            item['status'] = work_status
             DB.completed.insert(item)
             DB.workqueue.remove(doc_ids=[item.doc_id])
             print("move:", item.doc_id)
@@ -188,7 +188,7 @@ class DB(object):
             item = DB.completed.get(doc_id=doc_id)
             if item is not None:
                 # TODO:正式的时候要换成video
-                if item['type'] != 'error':
+                if item['status'] != 'error':
                     items.append(item)
             if len(items) >= count_:
                 return items

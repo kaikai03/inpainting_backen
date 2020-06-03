@@ -40,6 +40,7 @@ async def read_items(*, user_agent: str = Header(None), x_token: List[str] = Hea
 async def read_all(*, request: Request):
     return {"request.headers": request.headers}
 
+
 class Item(BaseModel):
     name: str
     description: str = None
@@ -47,7 +48,10 @@ class Item(BaseModel):
     tax: float = None
     tags: List[str] = []
 
+
 fake_db = {}
+
+
 @router.post("/items/", response_model=Item)
 async def create_item(item: Item):
     if item is None:
