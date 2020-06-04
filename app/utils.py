@@ -15,5 +15,8 @@ def generate_doc_id() -> str:
     return str(uuid.uuid1())
 
 
-def standardization_filename(origin_name, file_type) -> str:
-    return get_string_time() + origin_name.split('.')[0] + '.' + file_type.split('/')[1]
+def standardization_filename(origin_name) -> str:
+    splitted = origin_name.split('.')
+    if len(splitted) >= 2:
+        return splitted[0] + '_' + get_string_time() + '.' + splitted[-1]
+    return splitted[0] + '_' + get_string_time() + '.unknown'

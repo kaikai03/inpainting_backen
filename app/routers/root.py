@@ -53,15 +53,15 @@ async def get_video(*, v_name: str):
 
 @router.post("/uploadfiles/")
 async def create_upload_files(files: List[UploadFile] = File(...)):
-    log = []
-    for file in files:
+    logs = []
+    for index, file in enumerate(files):
         content = await file.read()
-        file_name = u.standardization_filename(file.filename, file.content_type)
+        file_name = u.standardization_filename(file.filename)
         addr = con.root_folder + con.upload_tmp + file_name
         with open(addr, 'wb') as f:
             f.write(content)
-            log.append(file.filename+file.content_type)
-    return {"filenames": log}
+            logs.append({'index': index, 'origin': file.filename, 'type': file.content_type, 'save_name': file_name})
+    return {"filenames": logs}
 
 
 @router.get("/up.html")
