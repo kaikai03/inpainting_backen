@@ -7,7 +7,7 @@ def get_standard_time() -> str:
 
 
 def get_string_time() -> str:
-    return (datetime.now(timezone.utc) + timedelta(hours=8)).strftime('%Y%m%d%H%M%S_%f')
+    return (datetime.now(timezone.utc) + timedelta(hours=8)).strftime('%Y%m%d%H%M%S+z%f')
 
 
 def generate_doc_id() -> str:
