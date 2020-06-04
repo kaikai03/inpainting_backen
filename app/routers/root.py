@@ -52,15 +52,18 @@ async def get_video(*, v_name: str):
 
 
 @router.post("/uploadfiles/")
-async def create_upload_files(files: List[UploadFile] = File(...)):
+async def create_upload_files(tx: str = Form(...), files: List[UploadFile] = File(...)):
     logs = []
     for index, file in enumerate(files):
         content = await file.read()
-        file_name = u.standardization_filename(file.filename)
-        addr = con.root_folder + con.upload_tmp + file_name
-        with open(addr, 'wb') as f:
-            f.write(content)
-            logs.append({'index': index, 'origin': file.filename, 'type': file.content_type, 'save_name': file_name})
+        if len(content) > 0:
+            file_name = u.standardization_filename(file.filename)
+            addr = con.root_folder + con.upload_tmp + file_name
+            with open(addr, 'wb') as f:
+                f.write(content)
+                logs.append({'index': index, 'origin': file.filename, 'type': file.content_type, 'save_name': file_name})
+        else:
+            logs.append({'index': index, 'status': 'isn`t file'})
     return {"filenames": logs}
 
 
@@ -69,8 +72,10 @@ async def main():
     content = """
             <body>
             <form action="/uploadfiles/" enctype="multipart/form-data" method="post">
-            <input name="files" type="file" multiple>
-            <input type="submit">
+            <input name="files" type="file" multiple />
+            <input name="tx" type="text" value="22222" style="display:none;"/>
+            <textarea  name="tx" type="text" style="display:none;"> 222</textarea>
+            <input type="submit" />
             </form>
             </body>
              """
