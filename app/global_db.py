@@ -5,10 +5,9 @@ __trash_table__ = 'trash'
 
 
 from tinydb import TinyDB, Query, table, where
-from datetime import datetime, timezone, timedelta
+import app.utils as u
 import threading
 from tinydb.operations import increment
-import uuid
 import random
 
 from types import FunctionType
@@ -43,16 +42,6 @@ def sync(lock):
     return sync_lock
 
 
-def generate_doc_id() -> str:
-    # 生成唯一编号，所有doc都将使用其作为doc_id
-    return str(uuid.uuid1())
-
-
-def get_standard_time() -> str:
-    return (datetime.now(timezone.utc) + timedelta(hours=8)).strftime('%Y-%m-%dT%H:%M:%S%z')
-
-
-
 class DB(object):
     db_ = TinyDB('./db.json')
     query = Query()
@@ -82,13 +71,13 @@ class DB(object):
                     document['item_id'] = self.auto_increate_item_id()
 
             if document.get('doc') is None:
-                document['doc'] = generate_doc_id()
+                document['doc'] = u.generate_doc_id()
 
             if document.get('created') is None:
-                document['created'] = get_standard_time()
+                document['created'] = u.get_standard_time()
                 document['updated'] = ''
             else:
-                document['updated'] = get_standard_time()
+                document['updated'] = u.get_standard_time()
 
             return super().insert(document)
 
@@ -109,7 +98,7 @@ class DB(object):
                 cond: Optional[Query] = None,
                 doc_ids: Optional[Iterable[int]] = None,
         ) -> List[int]:
-            t = get_standard_time()
+            t = u.get_standard_time()
             if type(fields) is not FunctionType:
                 fields['updated'] = t
                 return super().update(fields, cond, doc_ids)
@@ -124,7 +113,7 @@ class DB(object):
                 cond: Optional[Query] = None,
                 doc_ids: Optional[Iterable[int]] = None,
         ) -> List[int]:
-            t = get_standard_time()
+            t = u.get_standard_time()
             if type(fields) is not FunctionType:
                 fields['updated'] = t
                 return super().update(fields, cond, doc_ids)

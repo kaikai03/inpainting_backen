@@ -61,7 +61,7 @@ async def create_item(item: Item):
     return item
 
 
-@router.get("/index")
+@router.get("/index_x")
 async def main():
     content = """
             <body>
@@ -84,18 +84,18 @@ async def main():
     return HTMLResponse(content=content)
 
 
-@router.post("/files/")
+@router.post("/files_x/")
 async def create_files(files: List[bytes] = File(...)):
     return {"file_sizes": [len(file) for file in files]}
 
 
-@router.post("/uploadfiles/")
+@router.post("/uploadfiles_x/")
 async def create_upload_files(files: List[UploadFile] = File(...)):
     # filename  content_type  file   await{write(data), read(size), seek(offset), close()}
     return {"filenames": [file.filename for file in files]}
 
 
-@router.post("/files3/")
+@router.post("/files3_x/")
 async def create_file(
  file: bytes = File(...), fileb: UploadFile = File(...), token: str = Form(...)):
     return {

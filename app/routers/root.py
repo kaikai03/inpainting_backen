@@ -5,6 +5,7 @@ import app.constants as con
 from fastapi import FastAPI, Path, Query, Header, Request, status, File, UploadFile, Form, HTTPException
 # from fastapi.responses import HTMLResponse
 from starlette.responses import HTMLResponse, JSONResponse, FileResponse
+import app.utils as u
 
 
 from fastapi.encoders import jsonable_encoder
@@ -48,6 +49,33 @@ async def get_cover(*, name: str):
 @router.get("/v/{v_name}")
 async def get_video(*, v_name: str):
     return FileResponse(con.root_folder + con.video_folder + v_name)
+
+
+@router.post("/uploadfiles/")
+async def create_upload_files(files: List[UploadFile] = File(...)):
+    log = []
+    for file in files:
+        content = await file.read()
+        file_name = u.standardization_filename(file.filename, file.content_type)
+        addr = con.root_folder + con.upload_tmp + file_name
+        with open(addr, 'wb') as f:
+            f.write(content)
+            log.append(file.filename+file.content_type)
+    return {"filenames": log}
+
+
+@router.get("/up.html")
+async def main():
+    content = """
+            <body>
+            <form action="/uploadfiles/" enctype="multipart/form-data" method="post">
+            <input name="files" type="file" multiple>
+            <input type="submit">
+            </form>
+            </body>
+             """
+    return HTMLResponse(content=content)
+
 
 
 # con.global_db.workqueue.remove(con.query.item_id.exists())
