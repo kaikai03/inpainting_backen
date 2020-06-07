@@ -52,7 +52,7 @@ async def get_video(*, v_name: str):
 
 
 @router.post("/uploadfiles/")
-async def create_upload_files(tx: str = Form(...), files: List[UploadFile] = File(...)):
+async def create_upload_files(files: List[UploadFile] = File(...)):
     logs = []
     for index, file in enumerate(files):
         content = await file.read()
@@ -65,6 +65,18 @@ async def create_upload_files(tx: str = Form(...), files: List[UploadFile] = Fil
         else:
             logs.append({'index': index, 'status': 'isn`t file'})
     return {"filenames": logs}
+
+
+@router.post("/uploadimg/")
+async def create_upload_files(img: UploadFile = File(...)):
+    content = await img.read()
+    if len(content) > 0:
+        file_name = u.standardization_filename(img.filename)
+        addr = con.root_folder + con.upload_tmp + file_name
+        with open(addr, 'wb') as f:
+            f.write(content)
+            return {'origin': img.filename, 'type': img.content_type, 'save_name': file_name}
+    return {"error": "1"}
 
 
 @router.get("/up.html")
