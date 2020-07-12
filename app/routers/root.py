@@ -29,6 +29,18 @@ class task_item(BaseModel):
     cover: str
     src: List[str] = None
 
+class task_param(BaseModel):
+    fps: int
+    frames: int
+    scan: int
+    track: Union['double-straight-line', 'straight-line', 'circle']
+    postfix: List[str]
+    zoomx: List[float]
+    zoomy: List[float]
+    zoomz: List[float]
+
+
+
 
 @router.get("/random/{count}", response_model=List[task_item])
 async def rand_tasks(*, count: int):
@@ -68,7 +80,7 @@ async def create_upload_files(files: List[UploadFile] = File(...)):
 
 
 @router.post("/uploadimg/")
-async def create_upload_files(img: UploadFile = File(...)):
+async def create_upload_file(img: UploadFile = File(...)):
     content = await img.read()
     if len(content) > 0:
         file_name = u.standardization_filename(img.filename)
@@ -92,6 +104,11 @@ async def main():
             </body>
              """
     return HTMLResponse(content=content)
+
+@router.post("/uploadtask/")
+async def create_task(task: task_param):
+    print(task)
+    return {"task": task}
 
 
 

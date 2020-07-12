@@ -29,8 +29,8 @@ app.add_middleware(
 
 @app.middleware("http")
 async def my_middleware(request: Request, call_next):
-    headers = request.headers
-    print("middleware",headers)
+    print("middleware_header:",request.headers)
+    print("middleware_body:", request.body)
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time
