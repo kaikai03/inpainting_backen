@@ -38,6 +38,7 @@ class task_param(BaseModel):
     zoomx: List[float]
     zoomy: List[float]
     zoomz: List[float]
+    goods: List[str]
 
 
 
