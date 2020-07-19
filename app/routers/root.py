@@ -108,7 +108,7 @@ async def main():
 
 @router.post("/uploadtask/")
 async def create_task(task: task_param):
-    print(task)
+    print("uploadtask:", task)
     return {"task": task}
 
 

@@ -144,19 +144,33 @@ class DB(object):
         print('TinyDB __init__ completed')
 
     @staticmethod
-    def work_finish(doc_id: str, work_status: Union['pic', 'video', 'error'] = 'video'):
-        items = DB.workqueue.search(DB.query.doc == doc_id)
+    def work_create(doc: str, work_status: Union['completed', 'stopped', 'queuing', 'error'] = 'queuing'):
+        items = DB.workqueue.search(DB.query.doc == doc)
         for item in items:
             item['status'] = work_status
-            DB.completed.insert(item)
-            DB.workqueue.remove(doc_ids=[item.doc_id])
-            print("move:", item.doc_id)
+            if work_status == 'completed':
+                DB.completed.insert(item)
+                DB.workqueue.remove(doc_ids=[item.doc_id])
+                print("completed move:", item.doc_id)
+
+    @staticmethod
+    def work_change(doc: str, work_status: Union['completed', 'stopped', 'queuing', 'error'] = 'completed'):
+        items = DB.workqueue.search(DB.query.doc == doc)
+        for item in items:
+            item['status'] = work_status
+            if work_status == 'completed':
+                DB.completed.insert(item)
+                DB.workqueue.remove(doc_ids=[item.doc_id])
+                print("completed move:", item.doc_id)
+            else:
+                DB.workqueue.update({'status': work_status}, doc_ids=[item.doc_id])
 
     @staticmethod
     def work_drop(doc_ids: list):
         docs = []
         for doc_id in doc_ids:
             for item in DB.workqueue.search(DB.query.doc == doc_id):
+                DB.trash.insert(item)
                 docs.append(item.doc_id)
 
         if len(docs) > 0:
