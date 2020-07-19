@@ -144,14 +144,11 @@ class DB(object):
         print('TinyDB __init__ completed')
 
     @staticmethod
-    def work_create(doc: str, work_status: Union['completed', 'stopped', 'queuing', 'error'] = 'queuing'):
-        items = DB.workqueue.search(DB.query.doc == doc)
-        for item in items:
+    def work_create(tasks: List[dict], work_status: Union['completed', 'stopped', 'queuing', 'error'] = 'queuing'):
+        for item in tasks:
             item['status'] = work_status
-            if work_status == 'completed':
-                DB.completed.insert(item)
-                DB.workqueue.remove(doc_ids=[item.doc_id])
-                print("completed move:", item.doc_id)
+            DB.workqueue.insert(item)
+            print("create:", item)
 
     @staticmethod
     def work_change(doc: str, work_status: Union['completed', 'stopped', 'queuing', 'error'] = 'completed'):

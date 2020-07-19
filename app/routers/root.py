@@ -108,7 +108,7 @@ async def main():
 
 @router.post("/uploadtask/")
 async def create_task(task: task_param):
-    print("uploadtask:", task)
+    print("uploadtask:", jsonable_encoder(task))
     return {"task": task}
 
 
