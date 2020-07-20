@@ -107,9 +107,23 @@ async def main():
     return HTMLResponse(content=content)
 
 @router.post("/uploadtask/")
-async def create_task(task: task_param):
-    print("uploadtask:", jsonable_encoder(task))
-    return {"task": task}
+async def create_task(upload: task_param):
+    print("uploadtask:", jsonable_encoder(upload))
+
+    upload_dic = jsonable_encoder(upload)
+    tasks = []
+    for img in upload_dic['goods']:
+        task = upload_dic.copy()
+        del task['goods']
+        task['img'] = img
+        tasks.append(task)
+
+    if len(tasks) > 0:
+        con.global_db.work_create(tasks)
+
+    return tasks
+
+
 
 
 

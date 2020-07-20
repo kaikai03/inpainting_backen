@@ -144,7 +144,7 @@ class DB(object):
         print('TinyDB __init__ completed')
 
     @staticmethod
-    def work_create(tasks: List[dict], work_status: Union['completed', 'stopped', 'queuing', 'error'] = 'queuing'):
+    def work_create(tasks: List[dict], work_status: Union['stopped', 'queuing', 'error'] = 'queuing'):
         for item in tasks:
             item['status'] = work_status
             DB.workqueue.insert(item)
