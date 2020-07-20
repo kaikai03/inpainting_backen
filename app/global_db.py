@@ -145,10 +145,12 @@ class DB(object):
 
     @staticmethod
     def work_create(tasks: List[dict], work_status: Union['stopped', 'queuing', 'error'] = 'queuing'):
+        status = []
         for item in tasks:
             item['status'] = work_status
-            DB.workqueue.insert(item)
+            status.append(DB.workqueue.insert(item))
             print("create:", item)
+        return status
 
     @staticmethod
     def work_change(doc: str, work_status: Union['completed', 'stopped', 'queuing', 'error'] = 'completed'):

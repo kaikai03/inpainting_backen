@@ -10,7 +10,7 @@ import app.utils as u
 
 from fastapi.encoders import jsonable_encoder
 
-
+import shutil, os
 
 from fastapi import APIRouter
 
@@ -56,12 +56,12 @@ async def rand_tasks(*, count: int):
 
 @router.get("/cover/{name}")
 async def get_cover(*, name: str):
-    return FileResponse(con.root_folder + con.img_folder + name)
+    return FileResponse(con.img_folder_full + name)
 
 
 @router.get("/v/{v_name}")
 async def get_video(*, v_name: str):
-    return FileResponse(con.root_folder + con.video_folder + v_name)
+    return FileResponse(con.video_folder_full + v_name)
 
 
 @router.post("/uploadfiles/")
@@ -71,7 +71,7 @@ async def create_upload_files(files: List[UploadFile] = File(...)):
         content = await file.read()
         if len(content) > 0:
             file_name = u.standardization_filename(file.filename)
-            addr = con.root_folder + con.upload_tmp + file_name
+            addr = con.upload_tmp_full + file_name
             with open(addr, 'wb') as f:
                 f.write(content)
                 logs.append({'index': index, 'origin': file.filename, 'type': file.content_type, 'save_name': file_name})
@@ -85,7 +85,7 @@ async def create_upload_file(img: UploadFile = File(...)):
     content = await img.read()
     if len(content) > 0:
         file_name = u.standardization_filename(img.filename)
-        addr = con.root_folder + con.upload_tmp + file_name
+        addr = con.upload_tmp_full + file_name
         with open(addr, 'wb') as f:
             f.write(content)
             return {'origin': img.filename, 'type': img.content_type, 'save_name': file_name}
@@ -108,6 +108,7 @@ async def main():
 
 @router.post("/uploadtask/")
 async def create_task(upload: task_param):
+    # 接受到任务，根据图片数量分解成单个图片的任务
     print("uploadtask:", jsonable_encoder(upload))
 
     upload_dic = jsonable_encoder(upload)
@@ -119,9 +120,32 @@ async def create_task(upload: task_param):
         tasks.append(task)
 
     if len(tasks) > 0:
-        con.global_db.work_create(tasks)
+        result = con.global_db.work_create(tasks)
 
-    return tasks
+    # 检查任务入库状态，如果发现存在入库失败，则手工回滚，并返回存储失败。
+    for id_ in result:
+        if not type(id_) is int:
+            con.global_db.workqueue.remove(doc_ids=[tmp for tmp in result if type(tmp) is int])
+            return JSONResponse(status_code=status.HTTP_507_INSUFFICIENT_STORAGE)
+
+    # 将任务图片移出临时文件夹，并返回最终生成的实际任务。
+    tasks_results = []
+    for id_ in result:
+        task = con.global_db.workqueue.get(doc_id=id_)
+        img_name = task['img']
+
+        # 如果图片在tmp，则移动到img文件夹
+        # 某些意外情况，如果图片不在tmp，但img里有，则任务继续
+        # 如果tmp与img都没有，报错。
+        if os.path.exists(con.upload_tmp_full+img_name):
+            shutil.move(con.upload_tmp_full+img_name, con.img_folder_full+img_name)
+        elif os.path.exists(con.img_folder_full+img_name):
+            continue
+        else:
+            con.global_db.workqueue.remove(doc_ids=[tmp for tmp in result if type(tmp) is int])
+            return JSONResponse(status_code=status.HTTP_507_INSUFFICIENT_STORAGE)
+        tasks_results.append(task)
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=tasks_results)
 
 
 
