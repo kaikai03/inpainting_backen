@@ -3,12 +3,23 @@ __workqueue_table__ = 'workqueue'
 __completed_table__ = 'completed'
 __trash_table__ = 'trash'
 
+__work_table__ = 'trash'
+
 
 from tinydb import TinyDB, Query, table, where
 import app.utils as u
 import threading
 from tinydb.operations import increment
 import random
+from enum import Enum
+
+
+class stat:
+    cpl = 'completed'
+    stop = 'stopped'
+    que = 'queuing'
+    err = 'error'
+
 
 from types import FunctionType
 from typing import (
@@ -70,8 +81,8 @@ class DB(object):
                 if document.get('item_id') is None:
                     document['item_id'] = self.auto_increate_item_id()
 
-            if document.get('doc') is None:
-                document['doc'] = u.generate_doc_id()
+            if document.get('doc_code') is None:
+                document['doc_code'] = u.generate_doc_id()
 
             if document.get('created') is None:
                 document['created'] = u.get_standard_time()
@@ -82,7 +93,7 @@ class DB(object):
             return super().insert(document)
 
         def upsert(self, document: Mapping, cond: Optional[Query] = None):
-            # 因为doc在插入过程中会被改变，会同时出现插入与更新操作。
+            # 因为doc_code在插入过程中会被改变，会同时出现插入与更新操作。
             # 懒得处理，直接禁用
             raise Exception("此版本禁止使用upsert")
 
@@ -144,7 +155,7 @@ class DB(object):
         print('TinyDB __init__ completed')
 
     @staticmethod
-    def work_create(tasks: List[dict], work_status: Union['stopped', 'queuing', 'error'] = 'queuing'):
+    def work_create(tasks: List[dict], work_status: Union[stat.stop, stat.que] = stat.que):
         status = []
         for item in tasks:
             item['status'] = work_status
@@ -153,11 +164,11 @@ class DB(object):
         return status
 
     @staticmethod
-    def work_change(doc: str, work_status: Union['completed', 'stopped', 'queuing', 'error'] = 'completed'):
-        items = DB.workqueue.search(DB.query.doc == doc)
+    def work_change(doc_code: str, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.cpl):
+        items = DB.workqueue.search(DB.query.doc_code == doc_code)
         for item in items:
             item['status'] = work_status
-            if work_status == 'completed':
+            if work_status == stat.cpl:
                 DB.completed.insert(item)
                 DB.workqueue.remove(doc_ids=[item.doc_id])
                 print("completed move:", item.doc_id)
@@ -165,10 +176,11 @@ class DB(object):
                 DB.workqueue.update({'status': work_status}, doc_ids=[item.doc_id])
 
     @staticmethod
-    def work_drop(doc_ids: list):
+    def work_drop(doc_codes: list):
         docs = []
-        for doc_id in doc_ids:
-            for item in DB.workqueue.search(DB.query.doc == doc_id):
+        for doc_code in doc_codes:
+            for item in DB.workqueue.search(DB.query.doc_code == doc_code):
+                # if item['status'] == 'completed'
                 DB.trash.insert(item)
                 docs.append(item.doc_id)
 
