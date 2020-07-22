@@ -125,7 +125,7 @@ async def create_task(upload: task_param):
     # 检查任务入库状态，如果发现存在入库失败，则手工回滚，并返回存储失败。
     for id_ in result:
         if not type(id_) is int:
-            con.global_db.workqueue.remove(doc_ids=[tmp for tmp in result if type(tmp) is int])
+            con.global_db.work_drop(doc_ids=[tmp for tmp in result if type(tmp) is int])
             return JSONResponse(status_code=status.HTTP_507_INSUFFICIENT_STORAGE)
 
     # 将任务图片移出临时文件夹，并返回最终生成的实际任务。
@@ -142,13 +142,16 @@ async def create_task(upload: task_param):
         elif os.path.exists(con.img_folder_full+img_name):
             continue
         else:
-            con.global_db.workqueue.remove(doc_ids=[tmp for tmp in result if type(tmp) is int])
+            con.global_db.work_drop(doc_ids=[tmp for tmp in result if type(tmp) is int])
             return JSONResponse(status_code=status.HTTP_507_INSUFFICIENT_STORAGE)
         tasks_results.append(task)
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=tasks_results)
 
 
-
+@router.post("/droptask/")
+async def drop_task(task: task_param):
+    # todo 文件标记，图片移动等
+    pass
 
 
 # con.global_db.workqueue.remove(con.query.item_id.exists())

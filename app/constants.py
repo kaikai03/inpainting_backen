@@ -11,7 +11,9 @@ root_folder = 'D:\\dev_tmp\\'
 upload_tmp = 'tmp\\'
 img_folder = 'imgs\\'
 video_folder = 'v\\'
+trash_folder = 'trash\\'
 
 upload_tmp_full = root_folder + upload_tmp
 img_folder_full = root_folder + img_folder
 video_folder_full = root_folder + video_folder
+trash_folder_full = root_folder + video_folder

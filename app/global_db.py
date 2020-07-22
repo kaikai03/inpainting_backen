@@ -3,7 +3,6 @@ __workqueue_table__ = 'workqueue'
 __completed_table__ = 'completed'
 __trash_table__ = 'trash'
 
-__work_table__ = 'trash'
 
 
 from tinydb import TinyDB, Query, table, where
@@ -176,13 +175,18 @@ class DB(object):
                 DB.workqueue.update({'status': work_status}, doc_ids=[item.doc_id])
 
     @staticmethod
-    def work_drop(doc_codes: list):
+    def work_drop(doc_codes: list = [], doc_ids: Optional[Iterable[int]] = None):
+        # 已完成的任务将不会被直接删除，而是进入回收站
         docs = []
         for doc_code in doc_codes:
             for item in DB.workqueue.search(DB.query.doc_code == doc_code):
-                # if item['status'] == 'completed'
-                DB.trash.insert(item)
+                if item['status'] == stat.cpl:
+                    DB.trash.insert(item)
+
                 docs.append(item.doc_id)
+
+        if doc_ids is not None:
+            docs.extend(doc_ids)
 
         if len(docs) > 0:
             DB.workqueue.remove(doc_ids=list(set(docs)))
