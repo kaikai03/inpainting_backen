@@ -175,7 +175,7 @@ class DB(object):
                 DB.workqueue.update({'status': work_status}, doc_ids=[item.doc_id])
 
     @staticmethod
-    def work_drop(doc_codes: list = [], doc_ids: Optional[Iterable[int]] = None):
+    def work_drop(doc_codes: List[str] = [], doc_ids: Optional[Iterable[int]] = None):
         # 已完成的任务将不会被直接删除，而是进入回收站
         docs = []
         for doc_code in doc_codes:
@@ -211,6 +211,19 @@ class DB(object):
             if len(items) >= count_:
                 return items
         return items
+
+    @staticmethod
+    def get_name_img(doc_codes: List[str] = [], work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.cpl):
+        results = []
+        for doc_code in doc_codes:
+            # 虽然code是唯一的，但没用get的原因是,search返回数组，空数组就能跳过了，减少错误判断
+            if work_status == stat.cpl:
+                result = DB.completed.search(DB.query.doc_code == doc_code)
+            else:
+                result = DB.workqueue.search(DB.query.doc_code == doc_code)
+            results.extend(result)
+
+        return [item['img'] for item in results]
 
 
 
