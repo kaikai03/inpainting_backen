@@ -192,6 +192,7 @@ class DB(object):
             DB.workqueue.remove(doc_ids=list(set(docs)))
 
         print("work_drop:", docs)
+        return docs
 
     @staticmethod
     def get_random(count: int):
@@ -227,7 +228,7 @@ class DB(object):
         return [item['img'] for item in results]
 
     staticmethod
-    def get_video_name(doc_codes: List[str] = []) -> List[str]:
+    def get_videos_name(doc_codes: List[str] = []) -> List[str]:
         results = []
         for doc_code in doc_codes:
             # 虽然code是唯一的，但没用get的原因是,search返回数组，空数组就能跳过了，减少错误判断
