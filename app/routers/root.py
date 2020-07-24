@@ -14,7 +14,7 @@ import shutil, os
 
 from fastapi import APIRouter
 
-
+import
 
 router = APIRouter()
 
@@ -149,9 +149,19 @@ async def create_task(upload: task_param):
 
 
 @router.post("/droptask/")
-async def drop_task(task: task_param):
+async def drop_task(task_codes: List[str], work_status: Union[con.stat.cpl, con.stat.que, con.stat.stop, con.stat.err]):
     # todo 文件标记，图片移动等
-    pass
+    drop_imgs = con.global_db.get_imgs_name(task_codes,work_status)
+    con.global_db.work_drop(task_codes)
+
+    for img in drop_imgs:
+        if os.path.exists(con.img_folder_full+img):
+            shutil.move(con.img_folder_full+img, con.trash_folder_full+img)
+
+    if work_status == con.stat.cpl:
+
+
+    return JSONResponse(status_code=status.HTTP_202_ACCEPTED)
 
 
 # con.global_db.workqueue.remove(con.query.item_id.exists())

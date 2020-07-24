@@ -213,7 +213,8 @@ class DB(object):
         return items
 
     @staticmethod
-    def get_name_img(doc_codes: List[str] = [], work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.cpl):
+    def get_imgs_name(doc_codes: List[str] = [],
+                      work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.cpl) -> List[str]:
         results = []
         for doc_code in doc_codes:
             # 虽然code是唯一的，但没用get的原因是,search返回数组，空数组就能跳过了，减少错误判断
@@ -224,6 +225,16 @@ class DB(object):
             results.extend(result)
 
         return [item['img'] for item in results]
+
+    staticmethod
+    def get_video_name(doc_codes: List[str] = []) -> List[str]:
+        results = []
+        for doc_code in doc_codes:
+            # 虽然code是唯一的，但没用get的原因是,search返回数组，空数组就能跳过了，减少错误判断
+            result = DB.completed.search(DB.query.doc_code == doc_code)
+            for item in result:
+                results.extend([doc_code + '_' + postfix +'.mp4' for postfix in item['postfix']])
+        return results
 
 
 
