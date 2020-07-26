@@ -13,7 +13,7 @@ import random
 from enum import Enum
 
 
-class stat:
+class stat(str, Enum):
     cpl = 'completed'
     stop = 'stopped'
     que = 'queuing'
