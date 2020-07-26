@@ -6,6 +6,7 @@ from fastapi import FastAPI, Path, Query, Header, Request, status, File, UploadF
 # from fastapi.responses import HTMLResponse
 from starlette.responses import HTMLResponse, JSONResponse, FileResponse
 import app.utils as u
+import math
 
 
 from fastapi.encoders import jsonable_encoder
@@ -162,7 +163,36 @@ async def drop_task(task_codes: List[str], work_status: con.stat):
             if os.path.exists(con.video_folder_full + video):
                 shutil.move(con.video_folder_full + img, con.trash_folder_full + img)
 
+    if len(dropped) == 0 or dropped is None:
+        return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                            content={'message': 'some wrong happened, nothing to drop'})
+
     return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=dropped)
+
+@router.get("/gettasks/")
+async def get_tasks(*, page_size: int, page: int = 1, work_status: con.stat = con.stat.que):
+    page_ = page-1 if page > 0 else 0
+    db_size = con.global_db.get_table_size(work_status)
+
+    pages_count = math.ceil(db_size / page_size)
+
+    if page_ >= pages_count-1:
+        last = db_size % page_size
+        if last == 0:
+            # 因为page有大于等于了，包含正好最后一页的情况，
+            # 最后一页如果正好满的话，会出现读取0个数据的情况。
+            last = page_size
+        contents = con.global_db.get_task(last*-1, None, work_status)
+        page_info = {'cur_page': pages_count, 'cur_count': last, 'page_all': pages_count}
+        return JSONResponse(status_code=status.HTTP_200_OK,
+                            content={'page_info': page_info, 'contents': contents})
+
+    pre_all = page_ * page_size
+    contents = con.global_db.get_task(pre_all, pre_all+page_size, work_status)
+    page_info = {'cur_page': page_ + 1, 'cur_count': page_size, 'page_all': pages_count}
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                        content={'page_info': page_info, 'contents': contents})
+
 
 
 

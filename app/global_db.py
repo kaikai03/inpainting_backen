@@ -11,6 +11,7 @@ import threading
 from tinydb.operations import increment
 import random
 from enum import Enum
+import math
 
 
 class stat(str, Enum):
@@ -60,6 +61,19 @@ class DB(object):
     @staticmethod
     def get_last_item_id() -> int:
         return DB.db_.table(__base_table__).get(where('item_id_auto').exists())['item_id_auto']
+
+    @staticmethod
+    def get_all_id(table_name: str) -> List[str]:
+        return list(DB.db_.storage.read()[table_name].keys())
+
+    @staticmethod
+    def get_table_size(work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.cpl) -> int:
+        table_ = DB.completed if work_status == stat.cpl else DB.workqueue
+        return len(table_)
+
+    @staticmethod
+    def get_trash_size() -> int:
+        return len(DB.trash)
 
     class auto_time_table(table.Table):
         # 相当于重载tinyDB的方法，实现在原功能基础上附带插入id，创建时间，更新时间等功能。
@@ -196,22 +210,32 @@ class DB(object):
 
     @staticmethod
     def get_random(count: int):
-        last_id = DB.get_last_item_id()
+        doc_ids = DB.get_all_id(__completed_table__)
         db_size = len(DB.completed)
         count_ = db_size if count > db_size else count
 
-        doc_ids = list(range(1, last_id+1))
         random.shuffle(doc_ids)
         items = []
         for doc_id in doc_ids:
-            item = DB.completed.get(doc_id=doc_id)
+            item = DB.completed.get(doc_id=int(doc_id))
             if item is not None:
-                # TODO:正式的时候要换成video
-                if item['status'] != 'error':
+                # 这个状态判断现在多余了，因为分表
+                if item['status'] != stat.cpl:
                     items.append(item)
             if len(items) >= count_:
                 return items
         return items
+
+    @staticmethod
+    def get_task(start: int, end, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err]
+                 ) -> List[str]:
+        table_ = DB.completed if work_status == stat.cpl else DB.workqueue
+
+        if isinstance(end, int):
+            if (start + end) > len(table_):
+                return []
+
+        return table_.all()[start:end]
 
     @staticmethod
     def get_imgs_name(doc_codes: List[str] = [],
@@ -227,7 +251,7 @@ class DB(object):
 
         return [item['img'] for item in results]
 
-    staticmethod
+    @staticmethod
     def get_videos_name(doc_codes: List[str] = []) -> List[str]:
         results = []
         for doc_code in doc_codes:
