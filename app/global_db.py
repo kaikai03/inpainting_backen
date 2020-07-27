@@ -179,14 +179,17 @@ class DB(object):
     @staticmethod
     def work_change(doc_code: str, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.cpl):
         items = DB.workqueue.search(DB.query.doc_code == doc_code)
+        result = []
         for item in items:
             item['status'] = work_status
+            # 虽然结果只有一个，由于search的返回结构，就按照多个来处理，万一以后有问题也提高发现概率。
+            result.extend(DB.workqueue.update({'status': work_status}, doc_ids=[item.doc_id]))
             if work_status == stat.cpl:
                 DB.completed.insert(item)
                 DB.workqueue.remove(doc_ids=[item.doc_id])
                 print("completed move:", item.doc_id)
-            else:
-                DB.workqueue.update({'status': work_status}, doc_ids=[item.doc_id])
+        return result
+
 
     @staticmethod
     def work_drop(doc_codes: List[str] = [], doc_ids: Optional[Iterable[int]] = None):
@@ -227,15 +230,22 @@ class DB(object):
         return items
 
     @staticmethod
-    def get_task(start: int, end, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err]
+    def get_tasks(start: int, end, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err]
                  ) -> List[str]:
         table_ = DB.completed if work_status == stat.cpl else DB.workqueue
 
         if isinstance(end, int):
             if (start + end) > len(table_):
                 return []
-
         return table_.all()[start:end]
+
+    @staticmethod
+    def get_task(doc_code: str, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.que
+                  ) -> dict:
+        table_ = DB.completed if work_status == stat.cpl else DB.workqueue
+
+        return table_.get(DB.query.doc_code == doc_code)
+
 
     @staticmethod
     def get_imgs_name(doc_codes: List[str] = [],
