@@ -2,7 +2,7 @@ from typing import List
 from typing import Union
 from pydantic import BaseModel
 import app.constants as con
-from fastapi import FastAPI, Path, Query, Header, Request, status, File, UploadFile, Form, HTTPException
+from fastapi import Body, Path, Query, Header, Request, status, File, UploadFile, Form, HTTPException
 # from fastapi.responses import HTMLResponse
 from starlette.responses import HTMLResponse, JSONResponse, FileResponse
 import app.utils as u
@@ -105,7 +105,7 @@ async def main():
             </body>
              """
     return HTMLResponse(content=content)
-
+#
 @router.post("/uploadtask/")
 async def create_task(upload: task_param):
     # 接受到任务，根据图片数量分解成单个图片的任务
@@ -149,7 +149,7 @@ async def create_task(upload: task_param):
 
 
 @router.post("/droptask/")
-async def drop_task(task_codes: List[str], work_status: con.stat):
+async def drop_task(task_codes: List[str] = Body(...), work_status: con.stat = Body(...)):
     drop_imgs = con.global_db.get_imgs_name(task_codes,work_status)
     dropped = con.global_db.work_drop(task_codes)
 
@@ -170,7 +170,7 @@ async def drop_task(task_codes: List[str], work_status: con.stat):
     return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=dropped)
 
 @router.get("/gettasks/")
-async def get_tasks(*, page_size: int, page: int = 1, work_status: con.stat = con.stat.que):
+async def get_tasks(*, page_size: int= Body(...), page: int = Body(...), work_status: con.stat = Body(...)):
     page_ = page-1 if page > 0 else 0
     db_size = con.global_db.get_table_size(work_status)
 
@@ -193,6 +193,25 @@ async def get_tasks(*, page_size: int, page: int = 1, work_status: con.stat = co
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content={'page_info': page_info, 'contents': contents})
 
+@router.post("/changestatus/")
+async def change_status(*, doc_code: str = Body(...), changeto_status: con.stat = Body(...)):
+    task = con.global_db.get_task(doc_code)
+    if task is None:
+        return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                            content={'message': 'error', 'contents':'doc_code not in queue list.'})
+
+
+    if task['status'] == changeto_status:
+        return JSONResponse(status_code=status.HTTP_200_OK,
+                            content={'message': 'success', 'contents':'but it dose not need to change.'})
+
+    results = con.global_db.work_change(doc_code, changeto_status)
+    if len(results) > 0:
+        return JSONResponse(status_code=status.HTTP_202_ACCEPTED,
+                            content={'message': 'success', 'contents': f'{str(results)}change into {changeto_status}'})
+    else:
+        return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                            content={'message': 'error', 'contents': 'nothing happened, maybe code error.'})
 
 
 
