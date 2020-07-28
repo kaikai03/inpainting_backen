@@ -64,6 +64,10 @@ class DB(object):
         return DB.db_.table(__base_table__).get(where('item_id_auto').exists())['item_id_auto']
 
     @staticmethod
+    def get_default_task_param() -> dict:
+        return DB.db_.table(__base_table__).get(where('item_id_auto').exists())
+
+    @staticmethod
     def get_all_id(table_name: str) -> List[str]:
         return list(DB.db_.storage.read()[table_name].keys())
 
@@ -165,7 +169,8 @@ class DB(object):
 
     def __init__(self):
         if len(DB.base) == 0:
-            DB.base.insert({"item_id_auto": 0})
+            DB.base.insert({'item_id_auto': 0})
+            DB.base.insert({"default_task_params":{'fps': 0, 'frames': 0, 'scan': 0, 'track':'double-straight-line', 'zoomx':0, 'zoomy':0, 'zoomz':0.5}})
         print('TinyDB __init__ completed')
 
     @staticmethod
