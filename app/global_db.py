@@ -18,6 +18,7 @@ class stat(str, Enum):
     cpl = 'completed'
     stop = 'stopped'
     que = 'queuing'
+    low = 'low'
     err = 'error'
 
 
