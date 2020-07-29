@@ -65,8 +65,24 @@ class DB(object):
         return DB.db_.table(__base_table__).get(where('item_id_auto').exists())['item_id_auto']
 
     @staticmethod
-    def get_default_task_param() -> dict:
-        return DB.db_.table(__base_table__).get(where('item_id_auto').exists())
+    def get_default_task_params() -> dict:
+        return DB.db_.table(__base_table__).get(where('default_task_params').exists())['default_task_params']
+
+    @staticmethod
+    def set_default_task_params(fps:int, frames:int, scan:int,
+                                track:Union['double-straight-line', "straight-line", "circle"],
+                                zoomx:float, zoomy:float, zoomz:float,) -> dict:
+        cur = DB.db_.table(__base_table__).get(where('default_task_params').exists())
+        new = {"default_task_params":{"fps": fps,"frames": frames,"scan": scan,"track": track,
+                                        "zoomx": zoomx,"zoomy": zoomy,"zoomz": zoomz
+                                      }
+               }
+        setted = DB.db_.table(__base_table__).update(new, where('default_task_params').exists())
+        if len(setted) == 0:
+            return None
+
+        return {"old_params":cur}
+
 
     @staticmethod
     def get_all_id(table_name: str) -> List[str]:
@@ -277,6 +293,7 @@ class DB(object):
             for item in result:
                 results.extend([doc_code + '_' + postfix +'.mp4' for postfix in item['postfix']])
         return results
+
 
 
 

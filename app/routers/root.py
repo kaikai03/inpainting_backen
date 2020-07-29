@@ -38,7 +38,7 @@ class task_param(BaseModel):
     zoomx: List[float]
     zoomy: List[float]
     zoomz: List[float]
-    goods: List[str]
+    goods: List[str] = None
 
 
 
@@ -105,7 +105,8 @@ async def main():
             </body>
              """
     return HTMLResponse(content=content)
-#
+
+
 @router.post("/uploadtask/")
 async def create_task(upload: task_param):
     # 接受到任务，根据图片数量分解成单个图片的任务
@@ -148,7 +149,7 @@ async def create_task(upload: task_param):
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=tasks_results)
 
 
-@router.post("/droptask/")
+@router.post("/drop/")
 async def drop_task(task_codes: List[str] = Body(...), work_status: con.stat = Body(...)):
     drop_imgs = con.global_db.get_imgs_name(task_codes,work_status)
     dropped = con.global_db.work_drop(task_codes)
@@ -169,7 +170,8 @@ async def drop_task(task_codes: List[str] = Body(...), work_status: con.stat = B
 
     return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=dropped)
 
-@router.get("/gettasks/")
+
+@router.get("/tasks/")
 async def get_tasks(*, page_size: int = Body(...), page: int = Body(...), work_status: con.stat = Body(...)):
     page_ = page-1 if page > 0 else 0
     db_size = con.global_db.get_table_size(work_status)
@@ -193,13 +195,13 @@ async def get_tasks(*, page_size: int = Body(...), page: int = Body(...), work_s
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content={'page_info': page_info, 'contents': contents})
 
+
 @router.post("/changestatus/")
 async def change_status(*, doc_code: str = Body(...), changeto_status: con.stat = Body(...)):
     task = con.global_db.get_task(doc_code)
     if task is None:
         return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                             content={'message': 'error', 'contents':'doc_code not in queue list.'})
-
 
     if task['status'] == changeto_status:
         return JSONResponse(status_code=status.HTTP_200_OK,
@@ -213,6 +215,28 @@ async def change_status(*, doc_code: str = Body(...), changeto_status: con.stat 
         return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE,
                             content={'message': 'error', 'contents': 'nothing happened, maybe code error.'})
 
+
+@router.get("/params/")
+async def get_default_params():
+    item = con.global_db.get_default_task_params()
+    if item is None:
+        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT,
+                            content={'message': 'error',
+                                     'contents': 'get anything, maybe some error happened when DB init.'})
+
+    return JSONResponse(status_code=status.HTTP_200_OK, content=item)
+
+
+@router.get("/setparams/")
+async def set_default_params(param: task_param):
+    old_item = con.global_db.set_default_task_params(param.fps, param.frames, param.scan, param.track,
+                                                 param.zoomx, param.zoomy, param.zoomz,)
+    if old_item is None:
+        return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                            content={'message': 'error',
+                                     'contents': 'set anything, maybe some error happened when DB init.'})
+
+    return JSONResponse(status_code=status.HTTP_200_OK, content=old_item)
 
 
 # con.global_db.workqueue.remove(con.query.item_id.exists())
