@@ -170,7 +170,7 @@ async def drop_task(task_codes: List[str] = Body(...), work_status: con.stat = B
     return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=dropped)
 
 @router.get("/gettasks/")
-async def get_tasks(*, page_size: int= Body(...), page: int = Body(...), work_status: con.stat = Body(...)):
+async def get_tasks(*, page_size: int = Body(...), page: int = Body(...), work_status: con.stat = Body(...)):
     page_ = page-1 if page > 0 else 0
     db_size = con.global_db.get_table_size(work_status)
 

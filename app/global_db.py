@@ -17,8 +17,9 @@ import math
 class stat(str, Enum):
     cpl = 'completed'
     stop = 'stopped'
-    que = 'queuing'
+    hi = 'high'
     low = 'low'
+    que = 'queuing'
     err = 'error'
 
 
