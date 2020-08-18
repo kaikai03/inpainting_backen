@@ -29,6 +29,7 @@ class task_item(BaseModel):
     cover: str
     src: List[str] = None
 
+
 class task_param(BaseModel):
     fps: int
     frames: int
@@ -39,8 +40,6 @@ class task_param(BaseModel):
     zoomy: List[float]
     zoomz: List[float]
     goods: List[str] = None
-
-
 
 
 @router.get("/random/{count}", response_model=List[task_item])
@@ -172,7 +171,7 @@ async def drop_task(task_codes: List[str] = Body(...), work_status: con.stat = B
 
 
 @router.get("/tasks/")
-async def get_tasks(*, page_size: int = Body(...), page: int = Body(...), work_status: con.stat = Body(...)):
+async def get_tasks(*, page_size: int, page: int, work_status: con.stat):
     page_ = page-1 if page > 0 else 0
     db_size = con.global_db.get_table_size(work_status)
 
@@ -184,13 +183,13 @@ async def get_tasks(*, page_size: int = Body(...), page: int = Body(...), work_s
             # 因为page有大于等于了，包含正好最后一页的情况，
             # 最后一页如果正好满的话，会出现读取0个数据的情况。
             last = page_size
-        contents = con.global_db.get_task(last*-1, None, work_status)
+        contents = con.global_db.get_tasks(last*-1, None, work_status)
         page_info = {'cur_page': pages_count, 'cur_count': last, 'page_all': pages_count}
         return JSONResponse(status_code=status.HTTP_200_OK,
                             content={'page_info': page_info, 'contents': contents})
 
     pre_all = page_ * page_size
-    contents = con.global_db.get_task(pre_all, pre_all+page_size, work_status)
+    contents = con.global_db.get_tasks(pre_all, pre_all+page_size, work_status)
     page_info = {'cur_page': page_ + 1, 'cur_count': page_size, 'page_all': pages_count}
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content={'page_info': page_info, 'contents': contents})
