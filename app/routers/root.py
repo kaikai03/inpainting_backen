@@ -171,7 +171,7 @@ async def drop_task(task_codes: List[str] = Body(...), work_status: con.stat = B
 
 
 @router.get("/tasks/")
-async def get_tasks(*, page_size: int, page: int, work_status: con.stat):
+async def get_tasks(*, page_size: int = Query(..., gt=0), page: int = Query(..., ge=0), work_status: con.stat):
     page_ = page-1 if page > 0 else 0
     db_size = con.global_db.get_table_size(work_status)
 
