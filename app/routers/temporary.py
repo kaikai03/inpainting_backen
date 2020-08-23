@@ -23,6 +23,7 @@ from pydantic import BaseModel
 
 from fastapi import APIRouter
 import app.constants as con
+import app.utils as u
 
 
 router = APIRouter()
@@ -117,3 +118,17 @@ async def create_file(
         "fileb_content_type": fileb.content_type,
     }
 
+@router.post("/uploadfiles/")
+async def create_upload_files(files: List[UploadFile] = File(...)):
+    logs = []
+    for index, file in enumerate(files):
+        content = await file.read()
+        if len(content) > 0:
+            file_name = u.standardization_filename(file.filename)
+            addr = con.upload_tmp_full + file_name
+            with open(addr, 'wb') as f:
+                f.write(content)
+                logs.append({'index': index, 'origin': file.filename, 'type': file.content_type, 'save_name': file_name})
+        else:
+            logs.append({'index': index, 'status': 'isn`t file'})
+    return {"filenames": logs}

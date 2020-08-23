@@ -63,24 +63,10 @@ async def get_video(*, v_name: str):
     return FileResponse(con.video_folder_full + v_name)
 
 
-@router.post("/uploadfiles/")
-async def create_upload_files(files: List[UploadFile] = File(...)):
-    logs = []
-    for index, file in enumerate(files):
-        content = await file.read()
-        if len(content) > 0:
-            file_name = u.standardization_filename(file.filename)
-            addr = con.upload_tmp_full + file_name
-            with open(addr, 'wb') as f:
-                f.write(content)
-                logs.append({'index': index, 'origin': file.filename, 'type': file.content_type, 'save_name': file_name})
-        else:
-            logs.append({'index': index, 'status': 'isn`t file'})
-    return {"filenames": logs}
-
 
 @router.post("/uploadimg/")
 async def create_upload_file(img: UploadFile = File(...)):
+    # 生成任务前，图片放置在临时文件夹
     content = await img.read()
     if len(content) > 0:
         file_name = u.standardization_filename(img.filename)
