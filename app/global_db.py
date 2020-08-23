@@ -258,16 +258,20 @@ class DB(object):
         table_ = DB.completed if work_status == stat.cpl else DB.workqueue
 
         if isinstance(end, int):
-            if (start + end) > len(table_):
+            if end > len(table_):
                 return []
-        return table_.all()[start:end]
+        content = table_.all()[start:end]
+        for item in content:
+            item['task_name'] = u.standardization_filename2taskname(item['img'])
+        return content
 
     @staticmethod
     def get_task(doc_code: str, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.que
                   ) -> dict:
         table_ = DB.completed if work_status == stat.cpl else DB.workqueue
-
-        return table_.get(DB.query.doc_code == doc_code)
+        item = table_.get(DB.query.doc_code == doc_code)
+        item['task_name'] = u.standardization_filename2taskname(item['img'])
+        return item
 
 
     @staticmethod

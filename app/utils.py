@@ -20,3 +20,8 @@ def standardization_filename(origin_name) -> str:
     if len(splitted) >= 2:
         return splitted[0] + '_' + get_string_time() + '.' + splitted[-1]
     return splitted[0] + '_' + get_string_time() + '.unknown'
+
+
+def standardization_filename2taskname(name) -> str:
+    splitted = name.split('_')
+    return "_".join(splitted[0:-1])

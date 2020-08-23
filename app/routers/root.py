@@ -171,12 +171,14 @@ async def get_tasks(*, page_size: int = Query(..., gt=0), page: int = Query(...,
             # 最后一页如果正好满的话，会出现读取0个数据的情况。
             last = page_size
         contents = con.global_db.get_tasks(last*-1, None, work_status)
-        page_info = {'cur_page': pages_count, 'cur_count': last, 'page_all': pages_count}
+        page_info = {'cur_page': pages_count, 'cur_count': last, 'page_all': pages_count, 'element_all': db_size}
         return JSONResponse(status_code=status.HTTP_200_OK,
                             content={'page_info': page_info, 'contents': contents})
 
     pre_all = page_ * page_size
+
     contents = con.global_db.get_tasks(pre_all, pre_all+page_size, work_status)
+    print(pre_all, pre_all + page_size, len(contents))
     page_info = {'cur_page': page_ + 1, 'cur_count': page_size, 'page_all': pages_count}
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content={'page_info': page_info, 'contents': contents})
