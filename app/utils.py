@@ -24,4 +24,5 @@ def standardization_filename(origin_name) -> str:
 
 def standardization_filename2taskname(name) -> str:
     splitted = name.split('_')
+    # 保留原名称中的_,去除正规化后附加的时间及原后缀
     return "_".join(splitted[0:-1])
