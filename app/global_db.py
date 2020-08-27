@@ -270,7 +270,8 @@ class DB(object):
                   ) -> dict:
         table_ = DB.completed if work_status == stat.cpl else DB.workqueue
         item = table_.get(DB.query.doc_code == doc_code)
-        item['task_name'] = u.standardization_filename2taskname(item['img'])
+        if not item is None:
+            item['task_name'] = u.standardization_filename2taskname(item['img'])
         return item
 
 

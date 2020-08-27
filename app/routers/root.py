@@ -184,7 +184,7 @@ async def get_tasks(*, page_size: int = Query(..., gt=0), page: int = Query(...,
                         content={'page_info': page_info, 'contents': contents})
 
 
-@router.post("/changestatus/")
+@router.post("/taskstatus/change")
 async def change_status(*, doc_code: str = Body(...), changeto_status: con.stat = Body(...)):
     task = con.global_db.get_task(doc_code)
     if task is None:
