@@ -139,6 +139,10 @@ async def drop_task(task_codes: List[str] = Body(...), work_status: con.stat = B
     drop_imgs = con.global_db.get_imgs_name(task_codes,work_status)
     dropped = con.global_db.work_drop(task_codes)
 
+    if len(dropped) == 0 or dropped is None:
+        return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                            content={'message': 'some wrong happened, nothing to drop'})
+
     for img in drop_imgs:
         if os.path.exists(con.img_folder_full+img):
             shutil.move(con.img_folder_full+img, con.trash_folder_full+img)
@@ -148,10 +152,6 @@ async def drop_task(task_codes: List[str] = Body(...), work_status: con.stat = B
         for video in drop_videos:
             if os.path.exists(con.video_folder_full + video):
                 shutil.move(con.video_folder_full + img, con.trash_folder_full + img)
-
-    if len(dropped) == 0 or dropped is None:
-        return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                            content={'message': 'some wrong happened, nothing to drop'})
 
     return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=dropped)
 
