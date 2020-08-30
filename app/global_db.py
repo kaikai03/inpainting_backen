@@ -200,7 +200,7 @@ class DB(object):
         return status
 
     @staticmethod
-    def work_change(doc_code: str, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.cpl):
+    def work_change(doc_code: str, work_status: Union[stat.cpl, stat.que, stat.hi, stat.low, stat.stop, stat.err] = stat.cpl):
         items = DB.workqueue.search(DB.query.doc_code == doc_code)
         result = []
         for item in items:
@@ -253,7 +253,7 @@ class DB(object):
         return items
 
     @staticmethod
-    def get_tasks(start: int, end, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err]
+    def get_tasks(start: int, end, work_status: Union[stat.cpl, stat.que, stat.hi, stat.low, stat.stop, stat.err]
                  ) -> List[str]:
         table_ = DB.completed if work_status == stat.cpl else DB.workqueue
 
@@ -266,7 +266,7 @@ class DB(object):
         return content
 
     @staticmethod
-    def get_task(doc_code: str, work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.que
+    def get_task(doc_code: str, work_status: Union[stat.cpl, stat.que, stat.hi, stat.low, stat.stop, stat.err] = stat.que
                   ) -> dict:
         table_ = DB.completed if work_status == stat.cpl else DB.workqueue
         item = table_.get(DB.query.doc_code == doc_code)
@@ -277,7 +277,7 @@ class DB(object):
 
     @staticmethod
     def get_imgs_name(doc_codes: List[str] = [],
-                      work_status: Union[stat.cpl, stat.que, stat.stop, stat.err] = stat.cpl) -> List[str]:
+                      work_status: Union[stat.cpl, stat.que, stat.hi, stat.low, stat.stop, stat.err] = stat.cpl) -> List[str]:
         results = []
         for doc_code in doc_codes:
             # 虽然code是唯一的，但没用get的原因是,search返回数组，空数组就能跳过了，减少错误判断
