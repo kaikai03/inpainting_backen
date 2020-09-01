@@ -3,12 +3,31 @@
 import psutil
 import time
 import pynvml
+import platform
+
 
 class Monitor:
     """ 速度单位为 bytes/s"""
+
     def __init__(self, interval=1):
         self.cpu_count = Monitor.get_cpu_count()
         self.interval = interval
+        self.system = platform.system()
+        self.platform = platform.platform()
+        self.architecture = platform.architecture()
+        if self.platform == 'Windows':
+            try:
+                import wmi
+                w = wmi.WMI()
+                self.user = w.Win32_ComputerSystem()[0].UserName
+                self.cpu_name = w.Win32_Processor()[0].Name
+                self.sys_caption = w.Win32_OperatingSystem()[0].Caption
+                self.sys_path = w.Win32_OperatingSystem()[0].WindowsDirectory
+                self.sys_serial = w.Win32_OperatingSystem()[0].SerialNumber
+                self.disk_caption = w.Win32_DiskDrive()[0].Caption
+                self.fan_status = w.Win32_Fan()[0].status
+            except Exception as e:
+                print(e)
 
     @staticmethod
     def get_cpu_count():
@@ -23,7 +42,7 @@ class Monitor:
         vm = psutil.virtual_memory()
         sm = psutil.swap_memory()
         return {'virtual': Monitor.usage_to_dic(vm),
-                'swap':  Monitor.usage_to_dic(sm)}
+                'swap': Monitor.usage_to_dic(sm)}
 
     @staticmethod
     def usage_to_dic(usage):
@@ -43,17 +62,18 @@ class Monitor:
         def get_io():
             infos = psutil.disk_io_counters(1).items()
             return [(item[0], item[1].read_bytes, item[1].write_bytes) for item in infos]
+
         start = get_io()
         time.sleep(self.interval)
         end = get_io()
-        results = [{'device_name': item[0], 'read_speed': (item[1]-start[index][1])/self.interval,
-                  'write_speed': (item[2]-start[index][2])/self.interval} for index, item in enumerate(end)]
+        results = [{'device_name': item[0], 'read_speed': (item[1] - start[index][1]) / self.interval,
+                    'write_speed': (item[2] - start[index][2]) / self.interval} for index, item in enumerate(end)]
         if device_all:
             return results
         else:
-            speed_max, index_max = 0,0
-            for index,item in enumerate(results):
-                speed = item['read_speed']+item['write_speed']
+            speed_max, index_max = 0, 0
+            for index, item in enumerate(results):
+                speed = item['read_speed'] + item['write_speed']
                 if speed > speed_max:
                     index_max = index
             results_filted = results[index_max]
@@ -64,11 +84,12 @@ class Monitor:
         def get_io():
             infos = psutil.net_io_counters()
             return infos.bytes_sent, infos.bytes_recv
+
         start = get_io()
         time.sleep(self.interval)
         end = get_io()
-        return {'sent_speed': (end[0]-start[0])/self.interval,
-                'recv_speed': (end[1]-start[1])/self.interval}
+        return {'sent_speed': (end[0] - start[0]) / self.interval,
+                'recv_speed': (end[1] - start[1]) / self.interval}
 
     @staticmethod
     def get_gpu_info():
@@ -91,5 +112,18 @@ class Monitor:
                 'net_io': self.get_net_io(),
                 }
 
-
-Monitor().get_report()
+    def get_base_info(self):
+        infos = {'system': self.system,
+                 'platform': self.platform,
+                 'architecture': self.architecture,
+                 'cpu_cores': self.cpu_count,
+                 }
+        if self.platform == 'Windows' and (self.cpu_name is not None):
+            infos['user'] = self.user
+            infos['cpu_name'] = self.cpu_name
+            infos['sys_caption'] = self.sys_caption
+            infos['sys_path'] = self.sys_path
+            infos['sys_serial'] = self.sys_serial
+            infos['disk_caption'] = self.disk_caption
+            infos['fan_status'] = self.fan_status
+        return infos
