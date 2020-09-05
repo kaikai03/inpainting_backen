@@ -118,6 +118,7 @@ class Monitor:
                 'disk_used': self.get_disk_used(device_all=False),
                 'disk_io': self.get_disk_io(device_all=False),
                 'net_io': self.get_net_io(),
+                'time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                 }
 
     def get_base_info(self):
