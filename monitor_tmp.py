@@ -2,7 +2,7 @@
 
 import psutil
 import time
-import pynvml
+# import pynvml
 import platform
 
 
@@ -15,7 +15,15 @@ class Monitor:
         self.system = platform.system()
         self.platform = platform.platform()
         self.architecture = platform.architecture()
-        if self.platform == 'Windows':
+        self.memory_total = psutil.virtual_memory().total
+        self.user = None
+        self.cpu_name = None
+        self.sys_caption = None
+        self.sys_path = None
+        self.sys_serial = None
+        self.disk_caption = None
+        self.fan_status = None
+        if self.system == 'Windows':
             try:
                 import wmi
                 w = wmi.WMI()
@@ -91,18 +99,18 @@ class Monitor:
         return {'sent_speed': (end[0] - start[0]) / self.interval,
                 'recv_speed': (end[1] - start[1]) / self.interval}
 
-    @staticmethod
-    def get_gpu_info():
-        try:
-            pynvml.nvmlInit()
-            handle = pynvml.nvmlDeviceGetHandleByIndex(0)  # 这里的0是GPU id
-            meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
-            print(meminfo.total)  # 第二块显卡总的显存大小
-            print(meminfo.used)  # 这里是字节bytes，所以要想得到以兆M为单位就需要除以1024**2
-            print(meminfo.free)  # 第二块显卡剩余显存大小
-            print(pynvml.nvmlDeviceGetCount())  # 显示有几块GPU
-        except Exception as e:
-            print(e)
+    # @staticmethod
+    # def get_gpu_info():
+    #     try:
+    #         pynvml.nvmlInit()
+    #         handle = pynvml.nvmlDeviceGetHandleByIndex(0)  # 这里的0是GPU id
+    #         meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
+    #         print(meminfo.total)  # 第二块显卡总的显存大小
+    #         print(meminfo.used)  # 这里是字节bytes，所以要想得到以兆M为单位就需要除以1024**2
+    #         print(meminfo.free)  # 第二块显卡剩余显存大小
+    #         print(pynvml.nvmlDeviceGetCount())  # 显示有几块GPU
+    #     except Exception as e:
+    #         print(e)
 
     def get_report(self):
         return {'cpu': self.get_cpu_used(),
@@ -117,8 +125,9 @@ class Monitor:
                  'platform': self.platform,
                  'architecture': self.architecture,
                  'cpu_cores': self.cpu_count,
+                 'memory_total': self.memory_total,
                  }
-        if self.platform == 'Windows' and (self.cpu_name is not None):
+        if self.system == 'Windows' and (self.cpu_name is not None):
             infos['user'] = self.user
             infos['cpu_name'] = self.cpu_name
             infos['sys_caption'] = self.sys_caption
@@ -127,3 +136,8 @@ class Monitor:
             infos['disk_caption'] = self.disk_caption
             infos['fan_status'] = self.fan_status
         return infos
+
+
+
+m = Monitor()
+m.get_base_info()
