@@ -1,0 +1,6 @@
+pub:
+  usr: test
+  pwd: test
+  host: 106.14.20.200
+  port: 5672
+  heartbeat: 300
