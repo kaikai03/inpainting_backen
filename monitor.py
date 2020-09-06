@@ -8,6 +8,9 @@ from publisher import Publisher
 import json
 import threading
 
+__publish_report_interval_default__ = 6
+__publish_report_interval_max__ = 20
+
 class Monitor:
     """ 速度单位为 bytes/s"""
     def __init__(self, interval=1):
@@ -39,6 +42,7 @@ class Monitor:
                 print(e)
         self.publish = Publisher(self.user)
         self.publish_timer = None
+        self.publish_report_interval = __publish_report_interval_default__
 
     @staticmethod
     def get_cpu_count():
@@ -141,10 +145,12 @@ class Monitor:
             infos['fan_status'] = self.fan_status
         return infos
 
-    def publish_report_start(self, pub_interval=10):
+    def publish_report_start(self):
         report = json.dumps(self.get_report())
         self.publish.publish_long(report)
-        self.publish_timer = threading.Timer(pub_interval, self.publish_report_start, [pub_interval])
+        self.publish_timer = threading.Timer(self.publish_report_interval,
+                                             self.publish_report_start,
+                                             [self.publish_report_interval])
         self.publish_timer.start()
         print("send")
 
@@ -153,11 +159,13 @@ class Monitor:
             self.publish_timer.cancel()
             self.publish_timer.cancel()
 
+    # TODO:补充动态publish间隔的功能，websock做完后
+    #  （因为这个类会独立出去，放到celery的工程中，所以
+    #  后台需要多加个有活跃访问的接口来实现动态推送，同时这个接口也可以作为celery在线的心跳）
 
 
-
-m = Monitor()
-# m.publish_report_start(10)
+# m = Monitor()
+# m.publish_report_start()
 #
 # m.publish_report_stop()
 # m.publish.conn_close()
