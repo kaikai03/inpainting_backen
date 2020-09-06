@@ -10,9 +10,8 @@ import time
 
 from app.routers import root
 from app.routers import user
-import app.constants as con
+from app.routers import monitor_sock
 
-from app.routers import temporary
 
 app = FastAPI()
 
@@ -40,7 +39,7 @@ async def my_middleware(request: Request, call_next):
 
 async def get_token_header(x_token: str = Header(None)):
     if x_token is not None:
-        raise HTTPException(status_code=400, detail="X-Token header invalid")
+        raise HTTPException(status_code=400, detail="X-Token header is banded")
     return "main"
 
 app.include_router(
@@ -62,6 +61,20 @@ app.include_router(
     user.router,
     prefix="/test",
     tags=["test"],
+)
+
+app.include_router(
+    root.router,
+    tags=["root"],
+    dependencies=[Depends(get_token_header)],
+    responses={404: {"description": "Not found"}},
+)
+
+app.include_router(
+    monitor_sock.router,
+    tags=["ws"],
+    prefix="/ws",
+    responses={404: {"description": "Not found"}},
 )
 
 
