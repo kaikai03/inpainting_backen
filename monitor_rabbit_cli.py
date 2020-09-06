@@ -4,25 +4,7 @@ import threading
 import pika
 import json
 
-# producer
-credentials = pika.PlainCredentials('root', 'root')
-connection = pika.BlockingConnection(pika.ConnectionParameters(
-    host='106.14.20.200', port=5672, credentials=credentials, heartbeat=300))
-channel = connection.channel()
-channel.exchange_declare(exchange=r'DESKTOP-QQDIIUS\\faker', durable=False, exchange_type='fanout')
 
-for i in range(10):
-    message = json.dumps({'OrderId': "x1000%s" % i})
-# 向队列插入数值 routing_key是队列名
-# delivery_mode = 2 声明消息在队列中持久化，delivery_mod = 1 消息非持久化。
-    channel.basic_publish(exchange=r'DESKTOP-QQDIIUS\\faker', routing_key='', body=message,
-                          properties=pika.BasicProperties(delivery_mode=1))
-    print("send:",message)
-
-connection.close()
-
-connection.is_closed
-channel.is_closed
 
 
 # consumer
@@ -54,21 +36,4 @@ connection_cli.close()
 connection_cli.is_closed
 channel_cli.is_closed
 
-import time
-monitor = Monitor()
-timer = None
-def reporter_start():
-    # channel.basic_publish(exchange=r'DESKTOP-QQDIIUS\\faker', routing_key='', body=json.dumps(monitor.get_report()),
-    #                       properties=pika.BasicProperties(delivery_mode=1))
-    channel.basic_publish(exchange=r'DESKTOP-QQDIIUS\\faker', routing_key='', body=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-                          properties=pika.BasicProperties(delivery_mode=1))
 
-    global timer
-    timer = threading.Timer(60, reporter_start)
-    timer.start()
-reporter_start()
-
-
-while(timer.is_alive()):
-    timer.cancel()
-    timer.cancel()
