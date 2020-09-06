@@ -72,8 +72,8 @@ app.include_router(
 
 app.include_router(
     monitor_sock.router,
-    tags=["ws"],
-    prefix="/ws",
+    tags=["monitor"],
+    prefix="/monitor",
     responses={404: {"description": "Not found"}},
 )
 
