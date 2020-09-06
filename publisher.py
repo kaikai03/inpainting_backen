@@ -3,12 +3,14 @@
 import pika
 import yaml
 
+__config_file__ = 'config.yaml'
+
 
 class Publisher:
     def __init__(self, computer_name):
         assert computer_name is not None
         self.computer = computer_name
-        with open('config.yaml', 'r') as f:
+        with open(__config_file__, 'r') as f:
             content = yaml.load(f)
             self.usr_pub = content['pub']['usr']
             self.pwd_pub = content['pub']['pwd']
