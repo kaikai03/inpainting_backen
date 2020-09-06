@@ -4,11 +4,12 @@ import psutil
 import time
 # import pynvml
 import platform
-
+from publisher import Publisher
+import json
+import threading
 
 class Monitor:
     """ 速度单位为 bytes/s"""
-
     def __init__(self, interval=1):
         self.cpu_count = Monitor.get_cpu_count()
         self.interval = interval
@@ -16,7 +17,7 @@ class Monitor:
         self.platform = platform.platform()
         self.architecture = platform.architecture()
         self.memory_total = psutil.virtual_memory().total
-        self.user = None
+        self.user = psutil.users()
         self.cpu_name = None
         self.sys_caption = None
         self.sys_path = None
@@ -36,6 +37,8 @@ class Monitor:
                 self.fan_status = w.Win32_Fan()[0].status
             except Exception as e:
                 print(e)
+        self.publish = Publisher(self.user)
+        self.publish_timer = None
 
     @staticmethod
     def get_cpu_count():
@@ -43,7 +46,7 @@ class Monitor:
 
     def get_cpu_used(self):
         used = psutil.cpu_percent(self.interval, True)
-        return {'average': sum(used) / self.cpu_count, 'per': used}
+        return {'average': round(sum(used) / self.cpu_count, 2), 'per': used}
 
     @staticmethod
     def get_memory_used():
@@ -138,7 +141,28 @@ class Monitor:
             infos['fan_status'] = self.fan_status
         return infos
 
+    def publish_report_start(self, pub_interval=10):
+        report = json.dumps(self.get_report())
+        self.publish.publish_long(report)
+        self.publish_timer = threading.Timer(pub_interval, self.publish_report_start, [pub_interval])
+        self.publish_timer.start()
+        print("send")
+
+    def publish_report_stop(self):
+        while self.publish_timer.is_alive():
+            self.publish_timer.cancel()
+            self.publish_timer.cancel()
+
+
 
 
 m = Monitor()
-m.get_base_info()
+# m.publish_report_start(10)
+#
+# m.publish_report_stop()
+# m.publish.conn_close()
+#
+# m.publish.publish_temp(json.dumps(m.get_base_info()))
+# m.publish.publish_long("111")
+#
+# m.publish_timer.is_alive()
