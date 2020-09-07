@@ -2,7 +2,7 @@
 
 安装
     
-    docker pull rabbitmq
+    docker pull rabbitmq:3.8.8-management
 
 加载
 
@@ -16,3 +16,8 @@
 安装后台
 
 	rabbitmq-plugins enable rabbitmq_management
+	
+##redis##
+
+    docker pull redis
+    docker run -itd -p 5673:6379  --name rds  redis  --requirepass "root1"
