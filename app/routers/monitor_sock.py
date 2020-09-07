@@ -16,17 +16,23 @@ class ConnectionManager:
         self.active_connections: List[WebSocket] = []
         self.active_name: dict = {}
 
+    def alter_socket(self, websocket):
+        socket_str = str(websocket)[1:-1]
+        socket_list = socket_str.split(' ')
+        socket_only = socket_list[3]
+        return socket_only
+
     async def connect(self, ws: WebSocket, computer: str):
         # 等待连接
         await ws.accept()
         # 存储ws连接对象
         self.active_connections.append(ws)
-        self.active_name[ws] = computer
+        self.active_name[self.alter_socket(ws)] = computer
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
         self.active_connections.remove(ws)
-        del self.active_name[ws]
+        return self.active_name.pop(self.alter_socket(ws))
 
     @staticmethod
     async def send_personal_message(message: str, ws: WebSocket):
@@ -97,8 +103,8 @@ async def websocket_endpoint(websocket: WebSocket, computer: str):
         while True:
             data = await websocket.receive_text()
             await manager.send_personal_message(f"你说了: {data}", websocket)
-            await manager.broadcast(f"用户:{computer} 说: {data}")
+            await manager.broadcast(f"用户:{manager.active_name[manager.alter_socket(websocket)]} 说: {data}")
 
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        await manager.broadcast(f"用户-{computer}-离开")
+        disconnect_user = manager.disconnect(websocket)
+        await manager.broadcast(f"用户-{disconnect_user}-离开")
