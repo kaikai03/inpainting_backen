@@ -14,16 +14,19 @@ class ConnectionManager:
     def __init__(self):
         # 存放激活的ws连接对象
         self.active_connections: List[WebSocket] = []
+        self.active_name: dict = {}
 
-    async def connect(self, ws: WebSocket):
+    async def connect(self, ws: WebSocket, computer: str):
         # 等待连接
         await ws.accept()
         # 存储ws连接对象
         self.active_connections.append(ws)
+        self.active_name[ws] = computer
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
         self.active_connections.remove(ws)
+        del self.active_name[ws]
 
     @staticmethod
     async def send_personal_message(message: str, ws: WebSocket):
@@ -89,7 +92,7 @@ async def websocket_endpoint(websocket: WebSocket, computer: str):
     # while True:
     #     data = await websocket.receive_text()
     #     await websocket.send_text(f"{computer}-Message text was: {data}")
-    await manager.connect(websocket)
+    await manager.connect(websocket, computer)
     try:
         while True:
             data = await websocket.receive_text()
