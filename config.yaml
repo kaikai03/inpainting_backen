@@ -7,3 +7,5 @@ pub:
 cel:
   broker: amqp://test:test@106.14.20.200:5672/celery
   backend: redis://:root1@106.14.20.200:5673/0
+cel_once:
+  backend: redis://:root1@106.14.20.200:5673/1
