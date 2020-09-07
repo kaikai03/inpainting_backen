@@ -4,3 +4,6 @@ pub:
   host: 106.14.20.200
   port: 5672
   heartbeat: 300
+cel:
+  broker: amqp://test:test@106.14.20.200:5672/celery
+  backend: redis://:root1@106.14.20.200:5673/0
