@@ -20,7 +20,7 @@ class Monitor:
         self.platform = platform.platform()
         self.architecture = platform.architecture()
         self.memory_total = psutil.virtual_memory().total
-        self.user = psutil.users()
+        self.user = psutil.users()[0].name
         self.cpu_name = None
         self.sys_caption = None
         self.sys_path = None

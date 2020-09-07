@@ -56,7 +56,6 @@ class Rabbit_cli:
         self.channel.stop_consuming()
 
     def close(self):
-
         self.channel.close()
         self.conn.close()
 
