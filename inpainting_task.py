@@ -65,7 +65,13 @@ if False:
 
     # TODO: worker name 用compute name，每次页面上线时，请求一下，就知道哪些节点在线了。
 
+
+
+def get_online_worker(app_celery):
     ## 这样可以拿到在线列表
-    # a = app.control.inspect().active_queues()
-    # a.keys()
     # 不过这里效率有问题，需要异步
+    # 有个前提：work必须比app上线得晚
+    return list(app_celery.control.inspect().active_queues().keys())
+print(get_online_worker(app))
+
+
