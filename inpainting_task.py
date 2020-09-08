@@ -75,3 +75,18 @@ def get_online_worker(app_celery):
 print(get_online_worker(app))
 
 
+import json
+import base64
+
+def get_base64_from_file(filepath):
+    with open(filepath, "rb") as f:
+        bytes_content = f.read() # bytes
+        bytes_64 = base64.b64encode(bytes_content)
+    return bytes_64.decode('utf-8') # bytes--->str  (remove `b`)
+
+def get_base85_from_file(filepath):
+    with open(filepath, "rb") as f:
+        bytes_content = f.read() # bytes
+        bytes_85 = base64.b85encode(bytes_content)
+    return bytes_85.decode('utf-8') # bytes--->str  (remove `b`)
+
