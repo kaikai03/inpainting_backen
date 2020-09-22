@@ -59,6 +59,9 @@ class Rabbit_cli:
         self.channel.close()
         self.conn.close()
 
+    # 先用celery获取在线列表，然后前端访问某monitor，
+    # socket连接时，同时检查是否存在同computer monitor的数据获取，如果有则不做操作，如果没有则启动一个新的rabbit_cli。
+    # rabbit_cli 获取到数据时，在sockets中匹配computer，进行boardnote thcast
 
 
 # import wmi
