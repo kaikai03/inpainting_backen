@@ -1,6 +1,8 @@
 from celery import Celery
 import yaml
 from celery_once import QueueOnce
+# import sys
+# sys.path.append('..\\inpainting_backen\\')
 
 __config_file__ = 'config.yaml'
 
@@ -72,7 +74,8 @@ def get_online_worker(app_celery):
     # 不过这里效率有问题，需要异步
     # 有个前提：work必须比app上线得晚
     return list(app_celery.control.inspect().active_queues().keys())
-print(get_online_worker(app))
+##不能写在 worker 里，会报错
+##print(get_online_worker(app))
 
 
 import json
