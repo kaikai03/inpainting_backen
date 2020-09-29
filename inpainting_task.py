@@ -1,8 +1,12 @@
+# coding: utf-8
+
 from celery import Celery
 import yaml
 from celery_once import QueueOnce
 from monitor import Monitor
 import sys
+import json
+
 __config_file__ = 'config.yaml'
 
 with open(__config_file__, 'r') as f:
@@ -73,39 +77,5 @@ def get_online_worker(app_celery):
     # 不过这里效率有问题，需要异步
     # 有个前提：work必须比app上线得晚
     return list(app_celery.control.inspect().active_queues().keys())
-print(get_online_worker(app))
+#print(get_online_worker(app))
 
-
-import json
-import base64
-
-def get_base64_from_file(filepath):
-    with open(filepath, "rb") as f:
-        bytes_content = f.read() # bytes
-        bytes_64 = base64.b64encode(bytes_content)
-    return bytes_64.decode('utf-8') # bytes--->str  (remove `b`)
-
-def get_base85_from_file(filepath):
-    with open(filepath, "rb") as f:
-        bytes_content = f.read() # bytes
-        bytes_85 = base64.b85encode(bytes_content)
-    return bytes_85.decode('utf-8') # bytes--->str  (remove `b`)
-
-def covert_base64_to_file(str_base64, to_file):
-    bytes_64 = str_base64.encode('utf-8') # str---> bytes (add `b`)
-    bytes_content = base64.decodebytes(bytes_64) # bytes
-    with open(to_file, "wb") as f:
-        f.write(bytes_content)
-
-def covert_base85_to_file(str_base85, to_file):
-    bytes_85 = str_base85.encode('utf-8') # str---> bytes (add `b`)
-    bytes_content = base64.b85decode(bytes_85) # bytes
-    with open(to_file, "wb") as f:
-        f.write(bytes_content)
-
-
-# a = get_base64_str_from_file('C:\\Users\\fakeQ\\Desktop\\11.png')
-# save_base64_str_to_file(a,'C:\\Users\\fakeQ\\Desktop\\33.png')
-#
-# a = get_base85_str_from_file('C:\\Users\\fakeQ\\Desktop\\11.png')
-# save_base85_str_to_file(a,'C:\\Users\\fakeQ\\Desktop\\33.png')
