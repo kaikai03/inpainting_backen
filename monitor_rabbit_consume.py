@@ -22,7 +22,7 @@ class Rabbit_cli:
         self.credentials = pika.PlainCredentials(self.usr_pub, self.pwd_pub)
         self.conn_param = pika.ConnectionParameters(
             host=self.host_pub, port=self.host_port, credentials=self.credentials, heartbeat=300)
-        self.exchange_created = False
+        self.exchange_created = False  # 控制是否创建exchange
         self.conn = None
         self.channel = None
 
@@ -71,8 +71,7 @@ class Rabbit_cli:
 # def cb(message):
 #     print("m:",message)
 #
-# r = Rabbit_cli(user,cb)
-# r.start()
+# r = Rabbit_cli('worker1',cb)
 # r.connect_init()
 # r.start()
 # r.stop()

@@ -1,8 +1,16 @@
 from celery import Celery
 import yaml
 from celery_once import QueueOnce
-
+from monitor import Monitor
+import sys
 __config_file__ = 'config.yaml'
+
+
+n_param = [sys.argv[i+1] for i,arg in enumerate(sys.argv) if arg=='-n']
+assert len(n_param) == 1
+work_name = n_param[0].split("@")[0]
+print("name:",work_name)
+
 
 with open(__config_file__, 'r') as f:
     content = yaml.load(f)
@@ -22,6 +30,11 @@ app.conf.ONCE = {
     'default_timeout': 60 * 60 * 2
   }
 }
+print('celery start up')
+
+
+m = Monitor(work_name)
+m.publish_report_start()
 
 import time
 
@@ -33,7 +46,7 @@ def add(x, y):
 
 
 if False:
-    # celery -A inpainting_task worker --loglevel=info -P eventlet -Q computerName
+    # celery -A inpainting_task worker --loglevel=info -P eventlet -Q 列队名
     # celery -A inpainting_task worker --loglevel=info -P eventlet -c 1 -n worker1@%h
     # celery -A inpainting_task worker --loglevel=info -P eventlet -c 1 -n worker2@%h
     # celery multi stopwait w1 -A inpainting_task -l info
@@ -72,7 +85,7 @@ def get_online_worker(app_celery):
     # 不过这里效率有问题，需要异步
     # 有个前提：work必须比app上线得晚
     return list(app_celery.control.inspect().active_queues().keys())
-print(get_online_worker(app))
+# print(get_online_worker(app))
 
 
 import json

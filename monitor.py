@@ -13,9 +13,11 @@ __publish_report_interval_max__ = 20
 
 class Monitor:
     """ 速度单位为 bytes/s"""
-    def __init__(self, interval=1):
+    def __init__(self, worker=None, interval=1):
+        self.worker = worker
         self.cpu_count = Monitor.get_cpu_count()
         self.interval = interval
+        self.publish_report_interval = __publish_report_interval_default__
         self.system = platform.system()
         self.platform = platform.platform()
         self.architecture = platform.architecture()
@@ -40,9 +42,12 @@ class Monitor:
                 self.fan_status = w.Win32_Fan()[0].status
             except Exception as e:
                 print(e)
-        self.publish = Publisher(self.user)
+
+        if self.worker is None:
+            self.worker = self.user
+        self.publish = Publisher(self.worker)
         self.publish_timer = None
-        self.publish_report_interval = __publish_report_interval_default__
+
 
     @staticmethod
     def get_cpu_count():
@@ -125,7 +130,8 @@ class Monitor:
                 'disk_used': self.get_disk_used(device_all=False),
                 'disk_io': self.get_disk_io(device_all=False),
                 'net_io': self.get_net_io(),
-                'time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                # 'time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                'net_io': int(round(time.time() * 1000))
                 }
 
     def get_base_info(self):
@@ -149,8 +155,7 @@ class Monitor:
         report = json.dumps(self.get_report())
         self.publish.publish_long(report)
         self.publish_timer = threading.Timer(self.publish_report_interval,
-                                             self.publish_report_start,
-                                             [self.publish_report_interval])
+                                             self.publish_report_start)
         self.publish_timer.start()
         print("send")
 

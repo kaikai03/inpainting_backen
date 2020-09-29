@@ -7,9 +7,9 @@ __config_file__ = 'config.yaml'
 
 
 class Publisher:
-    def __init__(self, computer_name):
-        assert computer_name is not None
-        self.computer = computer_name
+    def __init__(self, worker_name):
+        assert worker_name is not None
+        self.worker = worker_name
         with open(__config_file__, 'r') as f:
             content = yaml.load(f)
             self.usr_pub = content['pub']['usr']
@@ -24,7 +24,7 @@ class Publisher:
 
     def create_exchange(self, channel):
         if not self.exchange_created:
-            channel.exchange_declare(exchange=self.computer,
+            channel.exchange_declare(exchange=self.worker,
                                      durable=False, exchange_type='fanout')
             self.exchange_created = True
 
@@ -35,14 +35,17 @@ class Publisher:
 
     def publish_long(self, message):
         try:
-            if self.conn.is_closed or (not self.exchange_created):
+            if self.conn.is_closed or self.conn is None or (not self.exchange_created):
                 self.connect()
-            self.channel.basic_publish(exchange=self.computer,
+            self.channel.basic_publish(exchange=self.worker,
                                        routing_key='', body=message,
                                        properties=pika.BasicProperties(delivery_mode=1))
+            print('send_success:',message)
         except Exception as e:
             self.connect()
-            self.channel.basic_publish(exchange=self.computer,
+            print(e)
+            print('reconnect')
+            self.channel.basic_publish(exchange=self.worker,
                                        routing_key='', body=message,
                                        properties=pika.BasicProperties(delivery_mode=1))
 
@@ -51,7 +54,7 @@ class Publisher:
             conn_ = pika.BlockingConnection(self.conn_param)
             channel_ = conn_.channel()
             self.create_exchange(channel_)
-            channel_.basic_publish(exchange=self.computer, body=message, routing_key='',
+            channel_.basic_publish(exchange=self.worker, body=message, routing_key='',
                                    properties=pika.BasicProperties(delivery_mode=1))
             conn_.close()
         except Exception as e:
