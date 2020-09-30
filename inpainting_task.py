@@ -3,6 +3,9 @@
 from celery import Celery
 import yaml
 from celery_once import QueueOnce
+from monitor import Monitor
+import sys
+import json
 
 __config_file__ = 'config.yaml'
 
