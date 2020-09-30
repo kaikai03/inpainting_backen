@@ -4,7 +4,7 @@ import psutil
 import time
 # import pynvml
 import platform
-from publisher import Publisher
+from app.OEM_manage.publisher import Publisher
 import json
 import threading
 
