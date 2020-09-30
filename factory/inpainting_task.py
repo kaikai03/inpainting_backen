@@ -1,13 +1,20 @@
 # coding: utf-8
 
+import sys
 from celery import Celery
 import yaml
 from celery_once import QueueOnce
+# 因为pycharm会把app设为根，所以此处会报找不到方法，但是不影响。
 from monitor import Monitor
-import sys
-import json
+
 
 __config_file__ = 'config.yaml'
+
+n_param = [sys.argv[i+1] for i,arg in enumerate(sys.argv) if arg=='-n']
+assert len(n_param) == 1
+work_name = n_param[0].split("@")[0]
+print("name:",work_name)
+
 
 with open(__config_file__, 'r') as f:
     content = yaml.load(f)
@@ -27,6 +34,12 @@ app.conf.ONCE = {
     'default_timeout': 60 * 60 * 2
   }
 }
+
+print('celery start up')
+
+
+m = Monitor(work_name)
+m.publish_report_start()
 
 import time
 
