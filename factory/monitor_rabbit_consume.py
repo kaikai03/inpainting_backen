@@ -64,15 +64,15 @@ class Rabbit_cli:
     # rabbit_cli 获取到数据时，在sockets中匹配computer，进行boardnote thcast
 
 
-import wmi
-w = wmi.WMI()
-user = w.Win32_ComputerSystem()[0].UserName
-
-def cb(message):
-    print("m:",message)
-
-r = Rabbit_cli('worker1',cb)
-r.connect_init()
-r.start()
-r.stop()
-r.close()
+# import wmi
+# w = wmi.WMI()
+# user = w.Win32_ComputerSystem()[0].UserName
+#
+# def cb(message):
+#     print("m:",message)
+#
+# r = Rabbit_cli('worker1',cb)
+# r.connect_init()
+# r.start()
+# r.stop()
+# r.close()
