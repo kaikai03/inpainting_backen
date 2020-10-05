@@ -6,15 +6,16 @@ import yaml
 from celery_once import QueueOnce
 # 因为pycharm会把app设为根，所以此处会报找不到方法，但是不影响。
 from monitor import Monitor
-
+import threading
 
 __config_file__ = 'config.yaml'
+__heart_beat_interval__ = 30
 
 n_param = [sys.argv[i+1] for i,arg in enumerate(sys.argv) if arg=='-n']
 assert len(n_param) == 1
 work_name = n_param[0].split("@")[0]
 print("name:",work_name)
-
+heart_beat_timer = None
 
 with open(__config_file__, 'r') as f:
     content = yaml.load(f)
@@ -38,8 +39,7 @@ app.conf.ONCE = {
 print('celery start up')
 
 
-m = Monitor(work_name)
-m.publish_report_start()
+
 
 import time
 
@@ -48,6 +48,8 @@ def add(x, y):
     time.sleep(10)
     return x + y
 
+m = Monitor(work_name)
+m.publish_report_start()
 
 
 if False:
@@ -89,6 +91,26 @@ def get_online_worker(app_celery):
     ## 这样可以拿到在线列表
     # 不过这里效率有问题，需要异步
     # 有个前提：work必须比app上线得晚
-    return list(app_celery.control.inspect().active_queues().keys())
+    return list(app_celery.control.inspect().stats().keys())
 #print(get_online_worker(app))
+app.control.inspect().active_queues()
+app.control.inspect().stats()
+app.control.inspect().clock()
+app.control.inspect().ping()
 
+
+def heart_beat():
+    global heart_beat_timer
+    print("heart_beat",app.control.inspect().ping())
+    heart_beat_timer = threading.Timer(__heart_beat_interval__,heart_beat)
+    heart_beat_timer.start()
+
+def heart_beat_stop():
+    global heart_beat_timer
+    if heart_beat_timer is None:
+        return
+
+    while heart_beat_timer.is_alive():
+        heart_beat_timer.cancel()
+        heart_beat_timer.cancel()
+    heart_beat_timer = None
