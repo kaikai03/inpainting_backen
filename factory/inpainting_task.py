@@ -9,8 +9,8 @@ from celery_once import QueueOnce
 # 因为pycharm会把app设为根，所以此处会报找不到方法，但是不影响。
 from monitor import Monitor
 import threading
+import time
 
-from task1 import add
 
 __heart_beat_interval__ = 10
 
@@ -52,8 +52,9 @@ app.conf.ONCE = {
 print('celery start up')
 
 if isWorker:
-    m = Monitor(work_name)
-    m.publish_report_start()
+    # m = Monitor(work_name)
+    # m.publish_report_start()
+    from task1 import add
 
 
 
