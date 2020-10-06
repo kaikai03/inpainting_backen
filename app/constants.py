@@ -18,3 +18,5 @@ upload_tmp_full = root_folder + upload_tmp
 img_folder_full = root_folder + img_folder
 video_folder_full = root_folder + video_folder
 trash_folder_full = root_folder + trash_folder
+
+worker_online = []
