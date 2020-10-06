@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import sys
+sys.path.append('factory')
+sys.path.append('./factory/')
+
 from celery import Celery
 import yaml
 from celery_once import QueueOnce
@@ -9,9 +12,10 @@ from monitor import Monitor
 import threading
 
 __config_file__ = 'config.yaml'
-__heart_beat_interval__ = 30
+__heart_beat_interval__ = 10
 
 n_param = [sys.argv[i+1] for i,arg in enumerate(sys.argv) if arg=='-n']
+
 assert len(n_param) == 1
 work_name = n_param[0].split("@")[0]
 print("name:",work_name)
@@ -97,13 +101,15 @@ def get_online_worker(app_celery):
 # app.control.inspect().stats()
 # app.control.inspect().clock()
 # app.control.inspect().ping()
-
+# app.worker_main()
 
 def heart_beat_start():
     global heart_beat_timer
-    print("heart_beat",app.control.inspect().ping())
-    heart_beat_timer = threading.Timer(__heart_beat_interval__,heart_beat)
+    print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),app.control.inspect().ping())
+    heart_beat_timer = threading.Timer(__heart_beat_interval__,heart_beat_start)
     heart_beat_timer.start()
+
+
 
 def heart_beat_stop():
     global heart_beat_timer
