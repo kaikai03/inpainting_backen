@@ -2,7 +2,6 @@
 
 import sys
 sys.path.append('factory')
-sys.path.append('./factory/')
 
 from celery import Celery
 import yaml
@@ -11,15 +10,25 @@ from celery_once import QueueOnce
 from monitor import Monitor
 import threading
 
-__config_file__ = 'config.yaml'
+from task1 import add
+
 __heart_beat_interval__ = 10
+
+isWorker = False
+heart_beat_timer = None
 
 n_param = [sys.argv[i+1] for i,arg in enumerate(sys.argv) if arg=='-n']
 
-assert len(n_param) == 1
-work_name = n_param[0].split("@")[0]
-print("name:",work_name)
-heart_beat_timer = None
+
+if len(n_param) !=0:
+    isWorker = True
+
+if isWorker:
+    __config_file__ = 'config.yaml'
+    work_name = n_param[0].split("@")[0]
+    print("name:",work_name)
+else:
+    __config_file__ = './factory/config.yaml'
 
 with open(__config_file__, 'r') as f:
     content = yaml.load(f)
@@ -42,18 +51,10 @@ app.conf.ONCE = {
 
 print('celery start up')
 
+if isWorker:
+    m = Monitor(work_name)
+    m.publish_report_start()
 
-
-
-import time
-
-@app.task(base=QueueOnce)
-def add(x, y):
-    time.sleep(10)
-    return x + y
-
-m = Monitor(work_name)
-m.publish_report_start()
 
 
 if False:
