@@ -7,7 +7,7 @@ import time
 from celery_once import QueueOnce
 
 from inpainting_task import app
-
+# import inpainting_task
 
 @app.task(base=QueueOnce)
 def add(x, y):
