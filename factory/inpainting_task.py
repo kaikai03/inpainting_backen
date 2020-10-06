@@ -96,17 +96,18 @@ if False:
 def get_online_worker(app_celery):
     ## 这样可以拿到在线列表
     # 有个前提：work必须比app上线得晚,否则有潜在问题
-    ret = app_celery.control.inspect().ping().keys()
+    ret = app_celery.control.inspect().ping()
     if ret is None:
         return []
     return list(app_celery.control.inspect().ping().keys())
 
 def heart_beat_start(call_back = None):
+    print('celery worker heart beat start',type(call_back))
     global heart_beat_timer
-    heart_beat_timer = threading.Timer(__heart_beat_interval__,heart_beat_start)
+    heart_beat_timer = threading.Timer(__heart_beat_interval__,heart_beat_start,[call_back])
     heart_beat_timer.start()
 
-    if callable(call_back):
+    if hasattr(call_back, '__call__'):
         call_back(get_online_worker(app))
     else:
         print("celery:",time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), get_online_worker(app))
