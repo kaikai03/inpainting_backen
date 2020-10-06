@@ -1,5 +1,6 @@
 from app.global_db import db, stat
 
+
 host = '127.0.0.1'
 port = 9000
 address = f"{host}:{port}"

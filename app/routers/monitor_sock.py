@@ -108,3 +108,18 @@ async def websocket_endpoint(websocket: WebSocket, computer: str):
     except WebSocketDisconnect:
         disconnect_user = manager.disconnect(websocket)
         await manager.broadcast(f"用户-{disconnect_user}-离开")
+
+
+import operator
+import factory.inpainting_task as celery_app
+import app.constants as con
+
+
+def update_worker(workers):
+    if not operator.eq(con.worker_online, workers):
+        con.worker_online.clear()
+        con.worker_online.extend(workers)
+        print('celery worker update')
+        print('now worker_online:', con.worker_online)
+
+celery_app.heart_beat_start(update_worker)

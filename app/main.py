@@ -12,9 +12,6 @@ from app.routers import root
 from app.routers import user
 from app.routers import monitor_sock
 
-import factory.inpainting_task as celery_app
-import app.constants as con
-import operator
 
 app = FastAPI()
 
@@ -95,16 +92,10 @@ async def validation_exception_handler(request, exc):
 # raise HTTPException(status_code=418, detail="Nope! I don't like 3.")
 
 
-def update_worker(workers):
-    if not operator.eq(con.worker_online, workers):
-        con.worker_online.clear()
-        con.worker_online.extend(workers)
-        print('celery worker update')
 
 
-celery_app.heart_beat_start(update_worker)
 
 
 if __name__ == '__main__':
     # --ssl-keyfile=./key.pem --ssl-certfile=./cert.pem
-    u.run(app='main:app', host="127.0.0.1", port=9000, reload=True, debug=True)
+    u.run(app='main:app', host="127.0.0.1", port=9000, reload=False, debug=False)
