@@ -113,13 +113,17 @@ async def websocket_endpoint(websocket: WebSocket, computer: str):
 import operator
 import factory.inpainting_task as celery_app
 import app.constants as con
-
+import time
 
 def update_worker(workers):
+    workers.sort()
     if not operator.eq(con.worker_online, workers):
         con.worker_online.clear()
         con.worker_online.extend(workers)
         print('celery worker update')
         print('now worker_online:', con.worker_online)
+    else:
+        print('workers not change:', con.worker_online,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+
 
 celery_app.heart_beat_start(update_worker)
