@@ -14,6 +14,8 @@ import time
 
 __heart_beat_interval__ = 10
 
+C_FAKEFORK=1
+
 isWorker = False
 heart_beat_timer = None
 
@@ -41,11 +43,15 @@ assert backend is not None
 
 print(backend, broker)
 app = Celery('inpainting_task', backend=backend, broker=broker)
+app.conf.update(
+    BROKER_HEARTBEAT=24*60*60*2,
+    BROKER_TRANSPORT_OPTIONS={'visibility_timeout': 3600}
+)
 app.conf.ONCE = {
   'backend': 'celery_once.backends.Redis',
   'settings': {
     'url': backend_once,
-    'default_timeout': 60 * 60 * 2
+    'default_timeout': 60 * 60 * 12
   }
 }
 
@@ -97,12 +103,17 @@ def get_online_worker(app_celery):
     ## 这样可以拿到在线列表
     # 有个前提：work必须比app上线得晚,否则有潜在问题
     ret = app_celery.control.inspect().ping()
+    print('ret:',ret,type(ret))
     if ret is None:
         return []
-    return list(app_celery.control.inspect().ping().keys())
+    return list(ret.keys())
+
+# app.control.inspect().ping()
+# app.control.inspect().stats()
+
 
 def heart_beat_start(call_back = None):
-    print('celery worker heart beat start',type(call_back))
+    # print('celery worker heart beat',type(call_back))
     global heart_beat_timer
     heart_beat_timer = threading.Timer(__heart_beat_interval__,heart_beat_start,[call_back])
     heart_beat_timer.start()
