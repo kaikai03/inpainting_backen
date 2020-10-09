@@ -10,7 +10,7 @@ import time
 
 from app.routers import root
 from app.routers import user
-from app.routers import monitor_sock
+from app.routers import dashboard
 
 
 app = FastAPI()
@@ -71,9 +71,9 @@ app.include_router(
 )
 
 app.include_router(
-    monitor_sock.router,
-    tags=["monitor"],
-    prefix="/monitor",
+    dashboard.router,
+    tags=["dashboard"],
+    prefix="/dashboard",
     responses={404: {"description": "Not found"}},
 )
 

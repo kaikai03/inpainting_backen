@@ -4,12 +4,45 @@ from typing import List
 
 from fastapi.websockets import WebSocketDisconnect
 from fastapi import APIRouter, WebSocket
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, JSONResponse
 from starlette.websockets import WebSocket
+from fastapi import Body, Path, Query, Header, Request, status, HTTPException
+
+import operator
+import factory.inpainting_task as celery_app
+import app.constants as con
+import time
+
+import factory.monitor_rabbit_consume as rb
 
 router = APIRouter()
 
+# -------------- workers listening background --------------
 
+
+def update_worker(workers):
+    workers.sort()
+    if not operator.eq(con.worker_online, workers):
+        con.worker_online.clear()
+        con.worker_online.extend(workers)
+        print('celery worker update')
+        print('now worker_online:', con.worker_online)
+    else:
+        print('workers not change:', con.worker_online,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+
+
+celery_app.heart_beat_start(update_worker)
+
+# ------------------- rabbit ---------------------------
+def cb(message):
+    print("m:", message)
+
+
+signal_cli = rb.Rabbit_cli('worker1',cb)
+signal_cli.connect_init()
+signal_cli.start()
+
+# ------------------- web socket ---------------------------
 class ConnectionManager:
     def __init__(self):
         # 存放激活的ws连接对象
@@ -65,7 +98,7 @@ html = """
 </ul>
 
 <script>
-    var ws = new WebSocket("ws://127.0.0.1:9000/monitor/ws/%s");
+    var ws = new WebSocket("ws://127.0.0.1:9000/dashboard/ws/%s");
 
     ws.onmessage = function(event) {
         var messages = document.getElementById('messages')
@@ -110,20 +143,27 @@ async def websocket_endpoint(websocket: WebSocket, computer: str):
         await manager.broadcast(f"用户-{disconnect_user}-离开")
 
 
-import operator
-import factory.inpainting_task as celery_app
-import app.constants as con
-import time
+@router.websocket("/ws/data/{worker}")
+async def websocket_endpoint(websocket: WebSocket, worker: str):
+    # await websocket.accept()
+    # while True:
+    #     data = await websocket.receive_text()
+    #     await websocket.send_text(f"{computer}-Message text was: {data}")
+    await manager.connect(websocket, worker)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.send_personal_message(f"你说了: {data}", websocket)
+            await manager.broadcast(f"用户:{manager.active_name[manager.alter_socket(websocket)]} 说: {data}")
 
-def update_worker(workers):
-    workers.sort()
-    if not operator.eq(con.worker_online, workers):
-        con.worker_online.clear()
-        con.worker_online.extend(workers)
-        print('celery worker update')
-        print('now worker_online:', con.worker_online)
-    else:
-        print('workers not change:', con.worker_online,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    except WebSocketDisconnect:
+        disconnect_user = manager.disconnect(websocket)
+        await manager.broadcast(f"用户-{disconnect_user}-离开")
 
 
-celery_app.heart_beat_start(update_worker)
+# -------------------normal api---------------------------
+
+
+@router.get("/workers")
+async def get():
+    return JSONResponse(status_code=status.HTTP_200_OK, content=con.worker_online)
