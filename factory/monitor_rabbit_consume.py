@@ -3,7 +3,7 @@ import threading
 import pika
 import yaml
 
-__config_file__ = 'config.yaml'
+__config_file__ = './factory/config.yaml'
 
 
 class Rabbit_cli:
