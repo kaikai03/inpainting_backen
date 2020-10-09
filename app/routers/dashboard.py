@@ -16,10 +16,9 @@ import time
 import factory.monitor_rabbit_consume as rb
 
 router = APIRouter()
+signal_cli_list = {}
 
 # -------------- workers listening background --------------
-
-
 def update_worker(workers):
     workers.sort()
     if not operator.eq(con.worker_online, workers):
@@ -34,13 +33,26 @@ def update_worker(workers):
 celery_app.heart_beat_start(update_worker)
 
 # ------------------- rabbit ---------------------------
-def cb(message):
+def signal_cb(message):
     print("m:", message)
 
 
-signal_cli = rb.Rabbit_cli('worker1',cb)
-signal_cli.connect_init()
-signal_cli.start()
+def signal_listening_start(worker_name:str):
+    signal_cli = rb.Rabbit_cli(worker_name, signal_cb)
+    signal_cli.connect_init()
+    signal_cli.start()
+    if worker_name not in signal_cli_list.keys():
+        signal_cli_list[worker_name] = signal_cli
+
+
+def signal_listening_stop(worker_name:str):
+    try:
+        signal_cli = signal_cli_list[worker_name]
+        signal_cli.stop()
+        signal_cli.close()
+        del signal_cli_list[worker_name]
+    except Exception as e:
+        print(e)
 
 # ------------------- web socket ---------------------------
 class ConnectionManager:
@@ -145,20 +157,7 @@ async def websocket_endpoint(websocket: WebSocket, computer: str):
 
 @router.websocket("/ws/data/{worker}")
 async def websocket_endpoint(websocket: WebSocket, worker: str):
-    # await websocket.accept()
-    # while True:
-    #     data = await websocket.receive_text()
-    #     await websocket.send_text(f"{computer}-Message text was: {data}")
-    await manager.connect(websocket, worker)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            await manager.send_personal_message(f"你说了: {data}", websocket)
-            await manager.broadcast(f"用户:{manager.active_name[manager.alter_socket(websocket)]} 说: {data}")
-
-    except WebSocketDisconnect:
-        disconnect_user = manager.disconnect(websocket)
-        await manager.broadcast(f"用户-{disconnect_user}-离开")
+    pass
 
 
 # -------------------normal api---------------------------
