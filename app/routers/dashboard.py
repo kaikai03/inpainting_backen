@@ -37,8 +37,8 @@ def signal_cb(message):
     print("m:", message)
 
 
-def signal_listening_start(worker_name:str):
-    signal_cli = rb.Rabbit_cli(worker_name, signal_cb)
+def signal_listening_start(worker_name:str, call_back):
+    signal_cli = rb.Rabbit_cli(worker_name, call_back)
     signal_cli.connect_init()
     signal_cli.start()
     if worker_name not in signal_cli_list.keys():
@@ -53,6 +53,8 @@ def signal_listening_stop(worker_name:str):
         del signal_cli_list[worker_name]
     except Exception as e:
         print(e)
+
+# signal_listening_start('worker1',signal_cb)
 
 # ------------------- web socket ---------------------------
 class ConnectionManager:
