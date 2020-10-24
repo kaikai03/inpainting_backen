@@ -37,7 +37,7 @@ class Rabbit_cli:
             ch.basic_ack(delivery_tag=method.delivery_tag)
             print(method.delivery_tag, body.decode())
             if self.callback_external is not None:
-                self.callback_external(body.decode())
+                self.callback_external(self.computer, body.decode())
 
         self.conn = pika.BlockingConnection(self.conn_param)
         self.channel = self.conn.channel()

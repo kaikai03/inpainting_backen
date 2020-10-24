@@ -33,8 +33,8 @@ def update_worker(workers):
 celery_app.heart_beat_start(update_worker)
 
 # ------------------- rabbit ---------------------------
-def signal_cb(message):
-    print("m:", message)
+def signal_cb(worker, message):
+    print(worker, ":", message)
 
 
 def signal_listening_start(worker_name:str, call_back):
