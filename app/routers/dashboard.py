@@ -54,7 +54,7 @@ def signal_listening_stop(worker_name:str):
     except Exception as e:
         print(e)
 
-# signal_listening_start('worker1',signal_cb)
+signal_listening_start('worker1',signal_cb)
 
 # ------------------- web socket ---------------------------
 class ConnectionManager:
