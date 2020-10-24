@@ -7,7 +7,7 @@ __config_file__ = './factory/config.yaml'
 
 
 class Rabbit_cli:
-    """ callback(message) """
+    """ callback(worker_name, message) """
     def __init__(self, computer_name, callback_external=None):
         assert computer_name is not None
         self.computer = computer_name
