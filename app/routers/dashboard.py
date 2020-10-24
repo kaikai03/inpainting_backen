@@ -90,7 +90,7 @@ class ConnectionManager:
         # 广播消息
         for connection in self.active_connections:
             await connection.send_text(message)
-
+    #TODO 连接时创建管道，将管道接收内容转发给客户端
 
 manager = ConnectionManager()
 
