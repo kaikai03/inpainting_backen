@@ -1,6 +1,6 @@
 # coding:utf-8
 
-from typing import List
+from typing import List,Dict
 
 from fastapi.websockets import WebSocketDisconnect
 from fastapi import APIRouter, WebSocket
@@ -54,13 +54,13 @@ def signal_listening_stop(worker_name:str):
     except Exception as e:
         print(e)
 
-signal_listening_start('worker1',signal_cb)
+# signal_listening_start('worker1',signal_cb)
 
 # ------------------- web socket ---------------------------
 class ConnectionManager:
     def __init__(self):
         # 存放激活的ws连接对象
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: dict = {}
         self.active_name: dict = {}
 
     def alter_socket(self, websocket):
@@ -69,17 +69,18 @@ class ConnectionManager:
         socket_only = socket_list[3]
         return socket_only
 
-    async def connect(self, ws: WebSocket, computer: str):
+    async def connect(self, ws: WebSocket, worker_name: str):
         # 等待连接
         await ws.accept()
         # 存储ws连接对象
-        self.active_connections.append(ws)
-        self.active_name[self.alter_socket(ws)] = computer
+        self.active_connections[worker_name] = ws
+        self.active_name[self.alter_socket(ws)] = worker_name
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
-        self.active_connections.remove(ws)
-        return self.active_name.pop(self.alter_socket(ws))
+        worker_name = self.active_name.pop(self.alter_socket(ws))
+        del self.active_connections[worker_name]
+        return worker_name
 
     @staticmethod
     async def send_personal_message(message: str, ws: WebSocket):
