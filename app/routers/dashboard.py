@@ -60,8 +60,8 @@ def signal_listening_stop(worker_name:str):
 class ConnectionManager:
     def __init__(self):
         # 存放激活的ws连接对象
-        self.active_connections: dict = {}
-        self.active_name: dict = {}
+        self.active_connections: Dict[str, WebSocket] = {}
+        self.active_names: Dict[str, str] = {}
 
     def alter_socket(self, websocket):
         socket_str = str(websocket)[1:-1]
@@ -74,11 +74,11 @@ class ConnectionManager:
         await ws.accept()
         # 存储ws连接对象
         self.active_connections[worker_name] = ws
-        self.active_name[self.alter_socket(ws)] = worker_name
+        self.active_names[self.alter_socket(ws)] = worker_name
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
-        worker_name = self.active_name.pop(self.alter_socket(ws))
+        worker_name = self.active_names.pop(self.alter_socket(ws))
         del self.active_connections[worker_name]
         return worker_name
 
@@ -151,7 +151,7 @@ async def websocket_endpoint(websocket: WebSocket, computer: str):
         while True:
             data = await websocket.receive_text()
             await manager.send_personal_message(f"你说了: {data}", websocket)
-            await manager.broadcast(f"用户:{manager.active_name[manager.alter_socket(websocket)]} 说: {data}")
+            await manager.broadcast(f"用户:{manager.active_names[manager.alter_socket(websocket)]} 说: {data}")
 
     except WebSocketDisconnect:
         disconnect_user = manager.disconnect(websocket)
