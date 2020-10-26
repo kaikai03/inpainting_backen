@@ -35,6 +35,7 @@ celery_app.heart_beat_start(update_worker)
 # ------------------- rabbit ---------------------------
 def signal_cb(worker, message):
     print(worker, ":", message)
+    manager.send_message_worker(message, worker)
 
 
 def signal_listening_start(worker_name:str, call_back):
@@ -82,9 +83,11 @@ class ConnectionManager:
         del self.active_connections[worker_name]
         return worker_name
 
-    @staticmethod
-    async def send_personal_message(message: str, ws: WebSocket):
-        # 发送个人消息
+    async def send_message_ws(self, message: str, ws: WebSocket):
+        await ws.send_text(message)
+
+    async def send_message_worker(self, message: str, worker_name: str):
+        ws = self.active_connections[worker_name]
         await ws.send_text(message)
 
     async def broadcast(self, message: str):
