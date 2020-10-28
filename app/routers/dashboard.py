@@ -16,7 +16,7 @@ import time
 import factory.monitor_rabbit_consume as rb
 
 router = APIRouter()
-signal_cli_list = {}
+
 
 # -------------- workers listening background --------------
 def update_worker(workers):
@@ -33,29 +33,38 @@ def update_worker(workers):
 celery_app.heart_beat_start(update_worker)
 
 # ------------------- rabbit ---------------------------
-def signal_cb(worker, message):
-    print(worker, ":", message)
-    manager.send_message_worker(message, worker)
+class RabbitManager:
+    def __init__(self, wss_manager):
+        self.wss_manager = wss_manager
+        self.clis_dic = {}
 
+    def cb(self, worker, message):
+        # callback to deal the message from rabbit
+        # default is sending to front page
+        print(worker, ":", message)
+        self.wss_manager.send_message_worker(message, worker)
 
-def signal_listening_start(worker_name:str, call_back):
-    signal_cli = rb.Rabbit_cli(worker_name, call_back)
-    signal_cli.connect_init()
-    signal_cli.start()
-    if worker_name not in signal_cli_list.keys():
-        signal_cli_list[worker_name] = signal_cli
+    def listening_start(self, worker_name:str, call_back=cb):
+        if worker_name not in self.clis_dic.keys():
+            print("this worker is in working:", worker_name)
+            return
+        cli = rb.Rabbit_cli(worker_name, call_back)
+        cli.connect_init()
+        cli.start()
+        self.clis_dic[worker_name] = cli
 
+    def listening_stop(self, worker_name:str):
+        try:
+            signal_cli = self.clis_dic[worker_name]
+            signal_cli.stop()
+            signal_cli.close()
+            del self.clis_dic[worker_name]
+        except Exception as e:
+            print(e)
 
-def signal_listening_stop(worker_name:str):
-    try:
-        signal_cli = signal_cli_list[worker_name]
-        signal_cli.stop()
-        signal_cli.close()
-        del signal_cli_list[worker_name]
-    except Exception as e:
-        print(e)
-
-# signal_listening_start('worker1',signal_cb)
+# rabbits_manager = RabbitManager(websoket_manager)
+# rabbits.listening_start('worker1')
+# signal_listening_start('worker1')
 
 # ------------------- web socket ---------------------------
 class ConnectionManager:
@@ -96,7 +105,7 @@ class ConnectionManager:
             await connection.send_text(message)
     #TODO 连接时创建管道，将管道接收内容转发给客户端
 
-manager = ConnectionManager()
+websoket_manager = ConnectionManager()
 
 
 html = """
@@ -149,16 +158,16 @@ async def websocket_endpoint(websocket: WebSocket, computer: str):
     # while True:
     #     data = await websocket.receive_text()
     #     await websocket.send_text(f"{computer}-Message text was: {data}")
-    await manager.connect(websocket, computer)
+    await websoket_manager.connect(websocket, computer)
     try:
         while True:
             data = await websocket.receive_text()
-            await manager.send_personal_message(f"你说了: {data}", websocket)
-            await manager.broadcast(f"用户:{manager.active_names[manager.alter_socket(websocket)]} 说: {data}")
+            await websoket_manager.send_personal_message(f"你说了: {data}", websocket)
+            await websoket_manager.broadcast(f"用户:{websoket_manager.active_names[websoket_manager.alter_socket(websocket)]} 说: {data}")
 
     except WebSocketDisconnect:
-        disconnect_user = manager.disconnect(websocket)
-        await manager.broadcast(f"用户-{disconnect_user}-离开")
+        disconnect_user = websoket_manager.disconnect(websocket)
+        await websoket_manager.broadcast(f"用户-{disconnect_user}-离开")
 
 
 @router.websocket("/ws/data/{worker}")
@@ -170,5 +179,5 @@ async def websocket_endpoint(websocket: WebSocket, worker: str):
 
 
 @router.get("/workers")
-async def get():
+async def getWorkers():
     return JSONResponse(status_code=status.HTTP_200_OK, content=con.worker_online)
