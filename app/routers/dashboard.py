@@ -48,11 +48,12 @@ class RabbitManager:
     def listening_start(self, worker_name:str, call_back=cb):
         if worker_name not in self.clis_dic.keys():
             print("this worker is in working:", worker_name)
-            return
+            return False
         cli = rb.Rabbit_cli(worker_name, call_back)
         cli.connect_init()
         cli.start()
         self.clis_dic[worker_name] = cli
+        return True
 
     def listening_stop(self, worker_name:str):
         try:
@@ -62,6 +63,7 @@ class RabbitManager:
             del self.clis_dic[worker_name]
         except Exception as e:
             print(e)
+
 
 # rabbits_manager = RabbitManager(websoket_manager)
 # rabbits.listening_start('worker1')
@@ -81,7 +83,7 @@ class ConnectionManager:
         socket_only = socket_list[3]
         return socket_only
 
-    def get_socket_name(self, ws: WebSocket):
+    def get_name_from_connections(self, ws: WebSocket):
         return self.active_connections[self.alter_socket(ws)][1]
 
     async def connect(self, ws: WebSocket, worker_name: str):
@@ -197,7 +199,7 @@ async def websocket_test(websocket: WebSocket, computer: str):
             data = await websocket.receive_text()
             await websoket_manager.send_personal_message(f"你说了: {data}", websocket)
             await websoket_manager.broadcast(
-                f"用户:{websoket_manager.get_socket_name(websocket)} 说: {data}")
+                f"用户:{websoket_manager.get_name_from_connections(websocket)} 说: {data}")
 
     except WebSocketDisconnect:
         disconnect_user = websoket_manager.disconnect(websocket)[0]
