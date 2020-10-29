@@ -114,8 +114,33 @@ class ConnectionManager:
             await ws.send_text(message)
     #TODO 连接时创建管道，将管道接收内容转发给客户端
 
+
 websoket_manager = ConnectionManager()
 
+
+@router.websocket("/ws/data/{worker_called}")
+async def websocket_backen(websocket: WebSocket, worker_called: str):
+    await websoket_manager.connect(websocket, worker_called)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            print(websoket_manager.alter_socket(websocket), ':', data)
+    except WebSocketDisconnect:
+        disconnect_user = websoket_manager.disconnect(websocket)[0]
+        print(f"用户-{disconnect_user}-离开")
+
+# -------------------normal api---------------------------
+
+
+@router.get("/workers")
+async def get_workers():
+    return JSONResponse(status_code=status.HTTP_200_OK, content=con.worker_online)
+
+
+
+
+
+# -------------------test ---------------------------
 
 html = """
 <!DOCTYPE html>
@@ -174,22 +199,3 @@ async def websocket_test(websocket: WebSocket, computer: str):
     except WebSocketDisconnect:
         disconnect_user = websoket_manager.disconnect(websocket)[0]
         await websoket_manager.broadcast(f"用户-{disconnect_user}-离开")
-
-
-@router.websocket("/ws/data/{worker_called}")
-async def websocket_backen(websocket: WebSocket, worker_called: str):
-    await websoket_manager.connect(websocket, worker_called)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            print(websoket_manager.alter_socket(websocket), ':', data)
-    except WebSocketDisconnect:
-        disconnect_user = websoket_manager.disconnect(websocket)[0]
-        print(f"用户-{disconnect_user}-离开")
-
-# -------------------normal api---------------------------
-
-
-@router.get("/workers")
-async def get_workers():
-    return JSONResponse(status_code=status.HTTP_200_OK, content=con.worker_online)
