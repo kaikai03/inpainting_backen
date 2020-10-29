@@ -34,6 +34,7 @@ celery_app.heart_beat_start(update_worker)
 
 # ------------------- rabbit ---------------------------
 class RabbitManager:
+    """每一个worker创建一个管道，不重复创建"""
     def __init__(self, wss_manager):
         self.wss_manager = wss_manager
         self.clis_dic = {}
@@ -68,6 +69,7 @@ class RabbitManager:
 
 # ------------------- web socket ---------------------------
 class ConnectionManager:
+    """每一个worker创建一个管道，不重复创建。当一个worker下没有ws连接（没被监听），则关闭管道"""
     def __init__(self):
         # 存放激活的ws连接对象
         self.active_connections: Dict[str, tuple] = {}
@@ -79,11 +81,11 @@ class ConnectionManager:
         socket_only = socket_list[3]
         return socket_only
 
-
     def get_socket_name(self, ws: WebSocket):
         return self.active_connections[self.alter_socket(ws)][1]
 
     async def connect(self, ws: WebSocket, worker_name: str):
+        # TODO 连接时创建管道，将管道广播给对应前端
         # 等待连接
         await ws.accept()
         # 存储ws连接对象
@@ -96,6 +98,7 @@ class ConnectionManager:
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
+        # TODO 如果完全没被监听的worker，关闭管道
         worker_name = self.active_connections[self.alter_socket(ws)][1]
         self.ws_in_worker[worker_name].remove(ws)
         del self.active_connections[self.alter_socket(ws)]
@@ -112,7 +115,7 @@ class ConnectionManager:
         # 广播消息
         for ws in self.active_connections:
             await ws.send_text(message)
-    #TODO 连接时创建管道，将管道接收内容转发给客户端
+
 
 
 websoket_manager = ConnectionManager()
