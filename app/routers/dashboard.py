@@ -70,27 +70,36 @@ class RabbitManager:
 class ConnectionManager:
     def __init__(self):
         # 存放激活的ws连接对象
-        self.active_connections: Dict[str, WebSocket] = {}
-        self.active_names: Dict[str, str] = {}
+        self.active_connections: Dict[str, tuple] = {}
+        self.ws_in_worker: Dict[str, list] = {}
 
-    def alter_socket(self, websocket):
-        socket_str = str(websocket)[1:-1]
+    def alter_socket(self, ws: WebSocket):
+        socket_str = str(ws)[1:-1]
         socket_list = socket_str.split(' ')
         socket_only = socket_list[3]
         return socket_only
+
+
+    def get_socket_name(self, ws: WebSocket):
+        return self.active_connections[self.alter_socket(ws)][1]
 
     async def connect(self, ws: WebSocket, worker_name: str):
         # 等待连接
         await ws.accept()
         # 存储ws连接对象
-        self.active_connections[worker_name] = ws
-        self.active_names[self.alter_socket(ws)] = worker_name
+        self.active_connections[self.alter_socket(ws)] = (ws, worker_name)
+        ws_list = self.ws_in_worker.get(worker_name, None)
+        if ws_list is None:
+            self.ws_in_worker[worker_name] = [ws]
+        else:
+            ws_list.append(ws)
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
-        worker_name = self.active_names.pop(self.alter_socket(ws))
-        del self.active_connections[worker_name]
-        return worker_name
+        worker_name = self.active_connections[self.alter_socket(ws)][1]
+        self.ws_in_worker[worker_name].remove(ws)
+        del self.active_connections[self.alter_socket(ws)]
+        return self.alter_socket(ws), worker_name
 
     async def send_message_ws(self, message: str, ws: WebSocket):
         await ws.send_text(message)
@@ -101,8 +110,8 @@ class ConnectionManager:
 
     async def broadcast(self, message: str):
         # 广播消息
-        for connection in self.active_connections:
-            await connection.send_text(message)
+        for ws in self.active_connections:
+            await ws.send_text(message)
     #TODO 连接时创建管道，将管道接收内容转发给客户端
 
 websoket_manager = ConnectionManager()
@@ -153,31 +162,34 @@ async def get(computer: str):
 
 
 @router.websocket("/ws/{computer}")
-async def websocket_endpoint(websocket: WebSocket, computer: str):
-    # await websocket.accept()
-    # while True:
-    #     data = await websocket.receive_text()
-    #     await websocket.send_text(f"{computer}-Message text was: {data}")
+async def websocket_test(websocket: WebSocket, computer: str):
     await websoket_manager.connect(websocket, computer)
     try:
         while True:
             data = await websocket.receive_text()
             await websoket_manager.send_personal_message(f"你说了: {data}", websocket)
-            await websoket_manager.broadcast(f"用户:{websoket_manager.active_names[websoket_manager.alter_socket(websocket)]} 说: {data}")
+            await websoket_manager.broadcast(
+                f"用户:{websoket_manager.get_socket_name(websocket)} 说: {data}")
 
     except WebSocketDisconnect:
-        disconnect_user = websoket_manager.disconnect(websocket)
+        disconnect_user = websoket_manager.disconnect(websocket)[0]
         await websoket_manager.broadcast(f"用户-{disconnect_user}-离开")
 
 
-@router.websocket("/ws/data/{worker}")
-async def websocket_endpoint(websocket: WebSocket, worker: str):
-    pass
-
+@router.websocket("/ws/data/{worker_called}")
+async def websocket_backen(websocket: WebSocket, worker_called: str):
+    await websoket_manager.connect(websocket, worker_called)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            print(websoket_manager.alter_socket(websocket), ':', data)
+    except WebSocketDisconnect:
+        disconnect_user = websoket_manager.disconnect(websocket)[0]
+        print(f"用户-{disconnect_user}-离开")
 
 # -------------------normal api---------------------------
 
 
 @router.get("/workers")
-async def getWorkers():
+async def get_workers():
     return JSONResponse(status_code=status.HTTP_200_OK, content=con.worker_online)
