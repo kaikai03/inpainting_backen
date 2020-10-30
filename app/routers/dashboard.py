@@ -45,7 +45,7 @@ class RabbitManager:
         print(worker, ":", message)
         self.wss_manager.send_message_worker(message, worker)
 
-    def listening_start(self, worker_name:str, call_back=cb):
+    def listening_start(self, worker_name: str, call_back=cb):
         if worker_name not in self.clis_dic.keys():
             print("this worker is in working:", worker_name)
             return False
@@ -55,7 +55,7 @@ class RabbitManager:
         self.clis_dic[worker_name] = cli
         return True
 
-    def listening_stop(self, worker_name:str):
+    def listening_stop(self, worker_name: str):
         try:
             signal_cli = self.clis_dic[worker_name]
             signal_cli.stop()
