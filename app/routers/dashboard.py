@@ -110,8 +110,9 @@ class ConnectionManager:
         await ws.send_text(message)
 
     async def send_message_worker(self, message: str, worker_name: str):
-        ws = self.active_connections[worker_name]
-        await ws.send_text(message)
+        wss = self.self.ws_in_worker[worker_name]
+        for ws in wss:
+            await ws.send_text(message)
 
     async def broadcast(self, message: str):
         # 广播消息
