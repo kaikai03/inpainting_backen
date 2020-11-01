@@ -14,7 +14,9 @@ import app.constants as con
 import time
 
 import factory.monitor_rabbit_consume as rb
-
+import threading
+import time
+import asyncio
 router = APIRouter()
 
 
@@ -35,24 +37,24 @@ celery_app.heart_beat_start(update_worker)
 # ------------------- rabbit ---------------------------
 class RabbitManager:
     """每一个worker创建一个管道，不重复创建"""
-    def __init__(self, wss_manager):
-        self.wss_manager = wss_manager
+    def __init__(self):
         self.clis_dic = {}
 
-    def cb(self, worker, message):
+    @staticmethod
+    def cb(worker, message):
         # callback to deal the message from rabbit
         # default is sending to front page
-        print(worker, ":", message)
-        self.wss_manager.send_message_worker(message, worker)
+        print("RabbitManager", worker, ":", message)
 
     def listening_start(self, worker_name: str, call_back=cb):
-        if worker_name not in self.clis_dic.keys():
-            print("this worker is in working:", worker_name)
+        if worker_name in self.clis_dic.keys():
+            print("RabbitManager this worker is in working:", worker_name)
             return False
         cli = rb.Rabbit_cli(worker_name, call_back)
         cli.connect_init()
         cli.start()
         self.clis_dic[worker_name] = cli
+        print("RabbitManager listening_start:", worker_name)
         return True
 
     def listening_stop(self, worker_name: str):
@@ -76,6 +78,14 @@ class ConnectionManager:
         # 存放激活的ws连接对象
         self.active_connections: Dict[str, tuple] = {}
         self.ws_in_worker: Dict[str, list] = {}
+        self.rabbits_manager = RabbitManager()
+        self.message_list = []
+        self.message_dealing_timer = None
+
+    def rabbits_cb(self, worker, message):
+        print("get and save")
+        self.message_list.append((worker, message))
+
 
     def alter_socket(self, ws: WebSocket):
         socket_str = str(ws)[1:-1]
@@ -93,10 +103,13 @@ class ConnectionManager:
         # 存储ws连接对象
         self.active_connections[self.alter_socket(ws)] = (ws, worker_name)
         ws_list = self.ws_in_worker.get(worker_name, None)
+        assert self.rabbits_cb is not None
+        self.rabbits_manager.listening_start(worker_name, self.rabbits_cb)
         if ws_list is None:
             self.ws_in_worker[worker_name] = [ws]
         else:
             ws_list.append(ws)
+        await ws.send_text("hello")
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
@@ -104,35 +117,74 @@ class ConnectionManager:
         worker_name = self.active_connections[self.alter_socket(ws)][1]
         self.ws_in_worker[worker_name].remove(ws)
         del self.active_connections[self.alter_socket(ws)]
+        self.rabbits_manager.listening_stop(worker_name)
         return self.alter_socket(ws), worker_name
+
+    async def message_dealing_start(self):
+        print('senAAAAAAAAAAAA')
+        while True:
+            if len(self.message_list) > 0:
+                for item in self.message_list:
+                    await self.send_message_worker(item[1], item[0])
+                print('senttttttttttttttttttttttttttttt')
+            else:
+                print('stoptoptop')
+                await asyncio.sleep(5.2)
+
+        # self.message_dealing_timer = threading.Timer(5.0, self.message_dealing_start)
+        # self.message_dealing_timer.start()
+
+
+    async def send_message_worker(self, message: str, worker_name: str):
+        wss = self.ws_in_worker[worker_name]
+        for ws in wss:
+            await ws.send_text(message)
 
     async def send_message_ws(self, message: str, ws: WebSocket):
         await ws.send_text(message)
 
-    async def send_message_worker(self, message: str, worker_name: str):
-        wss = self.self.ws_in_worker[worker_name]
-        for ws in wss:
-            await ws.send_text(message)
-
     async def broadcast(self, message: str):
         # 广播消息
-        for ws in self.active_connections:
+        for ws_id in self.active_connections.keys():
+            ws = self.active_connections[ws_id][0]
             await ws.send_text(message)
 
 
+websocket_manager = ConnectionManager()
+# websocket_manager.message_dealing_start()
+# def dd():
+#     print("start ddddddddddddddddddddddddddddddddddd")
+#     loop = asyncio.get_event_loop()
+#     loop.run_in_executor(None, websocket_manager.message_dealing_start)
+#     loop.close()
+# threading.Timer(1.0, dd).start()
+loop = asyncio.get_event_loop()
+loop.run_in_executor(None, websocket_manager.message_dealing_start,"")
+# loop.close()
+# loop = asyncio.get_event_loop()
+# loop.run_until_complete(websocket_manager.message_dealing_start())
 
-websoket_manager = ConnectionManager()
+# websocket_manager.rabbits_cb = lambda worker, message:\
+#     (print('ConnectionManager', worker), websocket_manager.send_message_worker(message, worker))
 
 
 @router.websocket("/ws/data/{worker_called}")
 async def websocket_backen(websocket: WebSocket, worker_called: str):
-    await websoket_manager.connect(websocket, worker_called)
+    await websocket_manager.connect(websocket, worker_called)
     try:
         while True:
+            # if len(websocket_manager.message_list) > 0:
+            #     for item in websocket_manager.message_list:
+            #         await websocket_manager.send_message_worker(item[1], item[0])
+            #     websocket_manager.message_list.clear()
+            #     print('senttttttttttttttttttttttttttttt')
+            # else:
+            #     print('stoptoptop')
+            #     await asyncio.sleep(5.2)
             data = await websocket.receive_text()
-            print(websoket_manager.alter_socket(websocket), ':', data)
+            print(websocket_manager.alter_socket(websocket), ':', data)
     except WebSocketDisconnect:
-        disconnect_user = websoket_manager.disconnect(websocket)[0]
+        disconnect_user = websocket_manager.disconnect(websocket)[0]
         print(f"用户-{disconnect_user}-离开")
 
 # -------------------normal api---------------------------
@@ -194,14 +246,14 @@ async def get(computer: str):
 
 @router.websocket("/ws/{computer}")
 async def websocket_test(websocket: WebSocket, computer: str):
-    await websoket_manager.connect(websocket, computer)
+    await websocket_manager.connect(websocket, computer)
     try:
         while True:
             data = await websocket.receive_text()
-            await websoket_manager.send_personal_message(f"你说了: {data}", websocket)
-            await websoket_manager.broadcast(
-                f"用户:{websoket_manager.get_name_from_connections(websocket)} 说: {data}")
+            await websocket_manager.send_message_ws(f"你说了: {data}", websocket)
+            await websocket_manager.broadcast(
+                f"用户:{websocket_manager.get_name_from_connections(websocket)} 说: {data}")
 
     except WebSocketDisconnect:
-        disconnect_user = websoket_manager.disconnect(websocket)[0]
-        await websoket_manager.broadcast(f"用户-{disconnect_user}-离开")
+        disconnect_user = websocket_manager.disconnect(websocket)[0]
+        await websocket_manager.broadcast(f"用户-{disconnect_user}-离开")

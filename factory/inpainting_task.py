@@ -58,8 +58,8 @@ app.conf.ONCE = {
 print('celery start up')
 
 if isWorker:
-    # m = Monitor(work_name)
-    # m.publish_report_start()
+    m = Monitor(work_name)
+    m.publish_report_start()
     from task1 import add
 
 
