@@ -123,16 +123,6 @@ class ConnectionManager:
             del self.last_message_cache[self.alter_socket(ws)]
         return self.alter_socket(ws), worker_name
 
-    async def message_dealing_start(self):
-        print('senAAAAAAAAAAAA')
-        while True:
-            if len(self.message_list) > 0:
-                for item in self.message_list:
-                    await self.send_message_worker(item[1], item[0])
-                print('senttttttttttttttttttttttttttttt')
-            else:
-                print('stoptoptop')
-                await asyncio.sleep(5.2)
 
         # self.message_dealing_timer = threading.Timer(5.0, self.message_dealing_start)
         # self.message_dealing_timer.start()
@@ -154,18 +144,7 @@ class ConnectionManager:
 
 
 websocket_manager = ConnectionManager()
-# websocket_manager.message_dealing_start()
-# def dd():
-#     print("start ddddddddddddddddddddddddddddddddddd")
-#     loop = asyncio.get_event_loop()
-#     loop.run_in_executor(None, websocket_manager.message_dealing_start)
-#     loop.close()
-# threading.Timer(1.0, dd).start()
-loop = asyncio.get_event_loop()
-loop.run_in_executor(None, websocket_manager.message_dealing_start,"")
-# loop.close()
-# loop = asyncio.get_event_loop()
-# loop.run_until_complete(websocket_manager.message_dealing_start())
+
 
 # websocket_manager.rabbits_cb = lambda worker, message:\
 #     (print('ConnectionManager', worker), websocket_manager.send_message_worker(message, worker))
@@ -176,16 +155,17 @@ async def websocket_backen(websocket: WebSocket, worker_called: str):
     await websocket_manager.connect(websocket, worker_called)
     try:
         while True:
-            # if len(websocket_manager.message_list) > 0:
-            #     for item in websocket_manager.message_list:
-            #         await websocket_manager.send_message_worker(item[1], item[0])
-            #     websocket_manager.message_list.clear()
-            #     print('senttttttttttttttttttttttttttttt')
-            # else:
-            #     print('stoptoptop')
-            #     await asyncio.sleep(5.2)
-            data = await websocket.receive_text()
-            print(websocket_manager.alter_socket(websocket), ':', data)
+            message = websocket_manager.last_message_cache.get(websocket_manager.alter_socket(websocket), '')
+            if len(message) > 0:
+                websocket_manager.last_message_cache[websocket_manager.alter_socket(websocket)] = ''
+                await websocket_manager.send_message_ws(message, websocket)
+                print('senttttttttttttttttttttttttttttt')
+                await asyncio.sleep(5.0)
+            else:
+                print('stoptoptop')
+                await asyncio.sleep(5.0)
+            # data = await websocket.receive_text()
+            # print(websocket_manager.alter_socket(websocket), ':', data)
     except WebSocketDisconnect:
         disconnect_user = websocket_manager.disconnect(websocket)[0]
         print(f"用户-{disconnect_user}-离开")
