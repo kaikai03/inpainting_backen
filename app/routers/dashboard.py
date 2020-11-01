@@ -6,6 +6,7 @@ from fastapi.websockets import WebSocketDisconnect
 from fastapi import APIRouter, WebSocket
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.websockets import WebSocket
+from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError,ConnectionClosed
 from fastapi import Body, Path, Query, Header, Request, status, HTTPException
 
 import operator
@@ -114,18 +115,14 @@ class ConnectionManager:
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
-        # TODO 如果完全没被监听的worker，关闭管道
         worker_name = self.active_connections[self.alter_socket(ws)][1]
+        print(worker_name, "disconnect")
         self.ws_in_worker[worker_name].remove(ws)
         del self.active_connections[self.alter_socket(ws)]
         self.rabbits_manager.listening_stop(worker_name)
         if self.last_message_cache.get(self.alter_socket(ws), False):
             del self.last_message_cache[self.alter_socket(ws)]
         return self.alter_socket(ws), worker_name
-
-
-        # self.message_dealing_timer = threading.Timer(5.0, self.message_dealing_start)
-        # self.message_dealing_timer.start()
 
 
     async def send_message_worker(self, message: str, worker_name: str):
@@ -146,10 +143,6 @@ class ConnectionManager:
 websocket_manager = ConnectionManager()
 
 
-# websocket_manager.rabbits_cb = lambda worker, message:\
-#     (print('ConnectionManager', worker), websocket_manager.send_message_worker(message, worker))
-
-
 @router.websocket("/ws/data/{worker_called}")
 async def websocket_backen(websocket: WebSocket, worker_called: str):
     await websocket_manager.connect(websocket, worker_called)
@@ -159,14 +152,14 @@ async def websocket_backen(websocket: WebSocket, worker_called: str):
             if len(message) > 0:
                 websocket_manager.last_message_cache[websocket_manager.alter_socket(websocket)] = ''
                 await websocket_manager.send_message_ws(message, websocket)
-                print('senttttttttttttttttttttttttttttt')
+                print(worker_called,'senttttttttttttttttttttttttttttt')
                 await asyncio.sleep(5.0)
             else:
-                print('stoptoptop')
+                print(worker_called,'stoptoptop')
                 await asyncio.sleep(5.0)
             # data = await websocket.receive_text()
             # print(websocket_manager.alter_socket(websocket), ':', data)
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, ConnectionClosedOK, ConnectionClosedError, ConnectionClosed):
         disconnect_user = websocket_manager.disconnect(websocket)[0]
         print(f"用户-{disconnect_user}-离开")
 
