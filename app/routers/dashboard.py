@@ -79,13 +79,14 @@ class ConnectionManager:
         self.active_connections: Dict[str, tuple] = {}
         self.ws_in_worker: Dict[str, list] = {}
         self.rabbits_manager = RabbitManager()
-        self.message_list = []
+        self.last_message_cache = {}
         self.message_dealing_timer = None
 
     def rabbits_cb(self, worker, message):
         print("get and save")
-        self.message_list.append((worker, message))
-
+        wss = self.ws_in_worker[worker]
+        for ws in wss:
+            self.last_message_cache[self.alter_socket(ws)] = message
 
     def alter_socket(self, ws: WebSocket):
         socket_str = str(ws)[1:-1]
@@ -118,6 +119,8 @@ class ConnectionManager:
         self.ws_in_worker[worker_name].remove(ws)
         del self.active_connections[self.alter_socket(ws)]
         self.rabbits_manager.listening_stop(worker_name)
+        if self.last_message_cache.get(self.alter_socket(ws), False):
+            del self.last_message_cache[self.alter_socket(ws)]
         return self.alter_socket(ws), worker_name
 
     async def message_dealing_start(self):
