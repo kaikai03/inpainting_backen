@@ -111,7 +111,7 @@ class ConnectionManager:
             self.ws_in_worker[worker_name] = [ws]
         else:
             ws_list.append(ws)
-        await ws.send_text("hello")
+        await ws.send_text("hello,"+worker_name)
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
@@ -123,7 +123,6 @@ class ConnectionManager:
         if self.last_message_cache.get(self.alter_socket(ws), False):
             del self.last_message_cache[self.alter_socket(ws)]
         return self.alter_socket(ws), worker_name
-
 
     async def send_message_worker(self, message: str, worker_name: str):
         wss = self.ws_in_worker[worker_name]
@@ -156,12 +155,13 @@ async def websocket_backen(websocket: WebSocket, worker_called: str):
                 await asyncio.sleep(5.0)
             else:
                 print(worker_called,'stoptoptop')
+                await websocket_manager.send_message_ws('beat', websocket)
                 await asyncio.sleep(5.0)
             # data = await websocket.receive_text()
             # print(websocket_manager.alter_socket(websocket), ':', data)
-    except (WebSocketDisconnect, ConnectionClosedOK, ConnectionClosedError, ConnectionClosed):
+    except (WebSocketDisconnect, ConnectionClosedOK, ConnectionClosedError, ConnectionClosed) as e:
         disconnect_user = websocket_manager.disconnect(websocket)[0]
-        print(f"用户-{disconnect_user}-离开")
+        print(str(e), f"用户-{disconnect_user}-离开")
 
 # -------------------normal api---------------------------
 
