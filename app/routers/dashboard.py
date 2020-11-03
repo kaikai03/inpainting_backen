@@ -60,10 +60,9 @@ class RabbitManager:
 
     def listening_stop(self, worker_name: str):
         try:
-            signal_cli = self.clis_dic[worker_name]
+            signal_cli = self.clis_dic.pop(worker_name)
             signal_cli.stop()
             signal_cli.close()
-            del self.clis_dic[worker_name]
         except Exception as e:
             print(e)
 
@@ -115,13 +114,11 @@ class ConnectionManager:
 
     def disconnect(self, ws: WebSocket):
         # 关闭时 移除ws对象
-        worker_name = self.active_connections[self.alter_socket(ws)][1]
+        worker_name = self.active_connections.pop(self.alter_socket(ws))[1]
         print(worker_name, "disconnect")
         self.ws_in_worker[worker_name].remove(ws)
-        del self.active_connections[self.alter_socket(ws)]
         self.rabbits_manager.listening_stop(worker_name)
-        if self.last_message_cache.get(self.alter_socket(ws), False):
-            del self.last_message_cache[self.alter_socket(ws)]
+        self.last_message_cache.pop(self.alter_socket(ws), None)
         return self.alter_socket(ws), worker_name
 
     async def send_message_worker(self, message: str, worker_name: str):
