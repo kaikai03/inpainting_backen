@@ -32,8 +32,13 @@ def update_worker(workers):
     else:
         print('workers not change:', con.worker_online,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-
-celery_app.heart_beat_start(update_worker)
+# TODO 可能有潜在问题，celery并未重连
+try:
+    celery_app.heart_beat_start(update_worker)
+except TimeoutError:
+    time.sleep(120)
+    print('retry heart_beat_start')
+    celery_app.heart_beat_start(update_worker)
 
 # ------------------- rabbit ---------------------------
 class RabbitManager:
