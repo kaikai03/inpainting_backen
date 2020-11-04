@@ -1,13 +1,14 @@
-
 import threading
 import pika
 import yaml
+import time
 
 __config_file__ = './factory/config.yaml'
 
 
 class Rabbit_cli:
     """ callback(worker_name, message) """
+
     def __init__(self, computer_name, callback_external=None):
         assert computer_name is not None
         self.computer = computer_name
@@ -25,6 +26,7 @@ class Rabbit_cli:
         self.exchange_created = False  # 控制是否创建exchange
         self.conn = None
         self.channel = None
+        self.is_start = False
 
     def create_exchange(self, channel):
         if not self.exchange_created:
@@ -32,37 +34,63 @@ class Rabbit_cli:
                                      durable=False, exchange_type='fanout')
             self.exchange_created = True
 
-    def connect_init(self):
-        def callback(ch, method, properties, body):
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            print(method.delivery_tag, body.decode())
-            if self.callback_external is not None:
-                self.callback_external(self.computer, body.decode())
+    def callback(self, ch, method, properties, body):
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        print(method.delivery_tag, body.decode())
+        if self.callback_external is not None:
+            self.callback_external(self.computer, body.decode())
 
+    def connect_init(self):
         self.conn = pika.BlockingConnection(self.conn_param)
         self.channel = self.conn.channel()
         self.create_exchange(self.channel)
         result_ = self.channel.queue_declare('', exclusive=True, auto_delete=True,
                                              arguments={'x-max-length': 10, 'x-overflow': 'drop-head'})
         self.channel.queue_bind(exchange=self.computer, queue=result_.method.queue)
-        self.channel.basic_consume(result_.method.queue, callback)
+        self.channel.basic_consume(result_.method.queue, self.callback)
+
+    def reconnect(self):
+        result_ = self.channel.queue_declare('', exclusive=True, auto_delete=True,
+                                             arguments={'x-max-length': 10, 'x-overflow': 'drop-head'})
+        self.channel.queue_bind(exchange=self.computer, queue=result_.method.queue)
+        self.channel.basic_consume(result_.method.queue, self.callback)
+
+    def _consuming(self):
+        retry_counter = 0
+        while self.is_start:
+            try:
+                self.channel.start_consuming()
+            except pika.exceptions.StreamLostError:
+                time.sleep(120)
+                self.reconnect()
+                retry_counter += 1
+                print("rabbit error:StreamLostError")
+                print("rabbit retry:", retry_counter)
+            except Exception as e:
+                time.sleep(120)
+                self.reconnect()
+                retry_counter += 1
+                print("rabbit error:", retry_counter)
+                print("rabbit retry:", retry_counter)
 
     def start(self):
         assert self.channel is not None
         assert self.channel.is_open
-        threading.Thread(target=lambda: self.channel.start_consuming()).start()
+        self.is_start = True
+        threading.Thread(target=self._consuming).start()
 
     def stop(self):
+        self.is_start = False
         self.channel.stop_consuming()
 
     def close(self):
+        self.is_start =False
         self.channel.close()
         self.conn.close()
 
     # 先用celery获取在线列表，然后前端访问某monitor，
     # socket连接时，同时检查是否存在同computer monitor的数据获取，如果有则不做操作，如果没有则启动一个新的rabbit_cli。
     # rabbit_cli 获取到数据时，在sockets中匹配computer，进行boardnote thcast
-
 
 # import wmi
 # w = wmi.WMI()
