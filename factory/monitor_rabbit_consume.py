@@ -23,16 +23,13 @@ class Rabbit_cli:
         self.credentials = pika.PlainCredentials(self.usr_pub, self.pwd_pub)
         self.conn_param = pika.ConnectionParameters(
             host=self.host_pub, port=self.host_port, credentials=self.credentials, heartbeat=300)
-        self.exchange_created = False  # 控制是否创建exchange
         self.conn = None
         self.channel = None
         self.is_start = False
 
     def create_exchange(self, channel):
-        if not self.exchange_created:
-            channel.exchange_declare(exchange=self.computer,
-                                     durable=False, exchange_type='fanout')
-            self.exchange_created = True
+        channel.exchange_declare(exchange=self.computer, durable=False, exchange_type='fanout')
+
 
     def callback(self, ch, method, properties, body):
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -49,28 +46,28 @@ class Rabbit_cli:
         self.channel.queue_bind(exchange=self.computer, queue=result_.method.queue)
         self.channel.basic_consume(result_.method.queue, self.callback)
 
-    def reconnect(self):
-        result_ = self.channel.queue_declare('', exclusive=True, auto_delete=True,
-                                             arguments={'x-max-length': 10, 'x-overflow': 'drop-head'})
-        self.channel.queue_bind(exchange=self.computer, queue=result_.method.queue)
-        self.channel.basic_consume(result_.method.queue, self.callback)
 
     def _consuming(self):
         retry_counter = 0
         while self.is_start:
             try:
+                self.connect_init()
                 self.channel.start_consuming()
             except pika.exceptions.StreamLostError:
-                time.sleep(120)
-                self.reconnect()
-                retry_counter += 1
                 print("rabbit error:StreamLostError")
+                time.sleep(120)
+
+                retry_counter += 1
+                print("rabbit retry:", retry_counter)
+            except pika.exceptions.ChannelWrongStateError:
+                print("rabbit error:ChannelWrongStateError")
+                time.sleep(120)
+                retry_counter += 1
                 print("rabbit retry:", retry_counter)
             except Exception as e:
-                time.sleep(120)
-                self.reconnect()
-                retry_counter += 1
                 print("rabbit error:", retry_counter)
+                time.sleep(120)
+                retry_counter += 1
                 print("rabbit retry:", retry_counter)
 
     def start(self):

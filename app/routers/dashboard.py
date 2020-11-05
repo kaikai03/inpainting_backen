@@ -57,7 +57,6 @@ class RabbitManager:
             print("RabbitManager this worker is in working:", worker_name)
             return False
         cli = rb.Rabbit_cli(worker_name, call_back)
-        cli.connect_init()
         cli.start()
         self.clis_dic[worker_name] = cli
         print("RabbitManager listening_start:", worker_name)
@@ -157,7 +156,7 @@ async def websocket_backen(websocket: WebSocket, worker_called: str):
                 await asyncio.sleep(5.0)
             else:
                 print(worker_called,'stoptoptop')
-                await websocket_manager.send_message_ws('beat', websocket)
+                await websocket_manager.send_message_ws('ws_beat', websocket)
                 await asyncio.sleep(5.0)
             # data = await websocket.receive_text()
             # print(websocket_manager.alter_socket(websocket), ':', data)
