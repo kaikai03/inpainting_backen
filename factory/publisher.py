@@ -21,6 +21,7 @@ class Publisher:
         self.conn_param = pika.ConnectionParameters(
             host=self.host_pub, port=self.host_port, credentials=self.credentials, heartbeat=300)
         self.exchange_created = False
+        self.conn = None
 
     def create_exchange(self, channel):
         if not self.exchange_created:

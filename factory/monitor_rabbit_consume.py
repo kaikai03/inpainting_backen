@@ -71,8 +71,6 @@ class Rabbit_cli:
                 print("rabbit retry:", retry_counter)
 
     def start(self):
-        assert self.channel is not None
-        assert self.channel.is_open
         self.is_start = True
         threading.Thread(target=self._consuming).start()
 
