@@ -8,7 +8,8 @@ from publisher import Publisher
 import json
 import threading
 
-__publish_report_interval_default__ = 6
+# 最终间隔还需要加上大约3秒的时间（cpu统计和网络统计耗时等）
+__publish_report_interval_default__ = 3
 __publish_report_interval_max__ = 20
 
 class Monitor:
