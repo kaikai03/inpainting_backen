@@ -65,7 +65,7 @@ class Rabbit_cli:
                 retry_counter += 1
                 print("rabbit retry:", retry_counter)
             except Exception as e:
-                print("rabbit error:", retry_counter)
+                print("rabbit error:", e)
                 time.sleep(120)
                 retry_counter += 1
                 print("rabbit retry:", retry_counter)
