@@ -111,7 +111,7 @@ def get_online_worker(app_celery):
 # app.control.inspect().ping()
 # app.control.inspect().stats()
 
-
+##
 def heart_beat_start(call_back = None):
     # print('celery worker heart beat',type(call_back))
     global heart_beat_timer
@@ -132,3 +132,7 @@ def heart_beat_stop():
         heart_beat_timer.cancel()
         heart_beat_timer.cancel()
     heart_beat_timer = None
+
+
+if isWorker:
+    heart_beat_start()
