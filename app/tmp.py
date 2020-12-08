@@ -63,3 +63,90 @@ indexes = ['房间隔缺损修补术','室间隔缺损修补术','经皮房间�
 for item in indexes:
     ct = df[(df['主手术名称']==item) | (df['手术2']==item)| (df['手术3']==item)| (df['手术4']==item)].shape[0]
     print(item,ct)
+
+
+###############################################
+# 临时工作
+import pandas as pd
+import requests, json
+import time
+
+excel = 'C:\\Users\\fakeQ\Desktop\\research_sx_er_test_patient.xlsx'
+
+header = {'Content-Type': 'application/json'}
+get_time_url = 'https://baby3.drims.cn/map/getHis?jzlb=1&cardNumber=%s'
+
+get_report_url = 'https://baby3.drims.cn/map/getRis?ReportsDateTime=%s&AdmissionID=%s'
+
+
+df = pd.read_excel(excel)
+cn = df[['name', 'cardNumber']].dropna()
+
+## 获取流水记录
+visits_pool = []
+for c in cn.iterrows():
+    ind = c[0]
+    name = c[1][0]
+    car = c[1][1]
+    print(ind,name,car)
+    # if ind < 7:
+    #     continue
+    ret = requests.get(get_time_url % car, headers=header)
+    if ret.status_code != 200:
+        print('error:',ret.status_code)
+        continue
+    if len(ret.text) < 10:
+        print('error:', len(ret.text))
+        continue
+    visits = json.loads(ret.text)
+    for visit in visits:
+        visit['name'] = c[1][0]
+        visit['cn'] = c[1][1]
+    visits_pool.extend(visits)
+
+    time.sleep(4.0)
+    print(c[0], 'finish')
+
+
+df_visits = pd.DataFrame(visits_pool)
+df_visits.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_visits.xlsx')
+
+# df_visits.reset_index()
+# ret_test = requests.get(get_report_url % ('20190911-20190912', 'A000300314971'), headers=header)
+# ris_test = json.loads(ret_test.text)
+#
+# len(ris_test.text)
+
+visits_aggregation = df_visits[['cn','startTime','endTime']].groupby('cn')\
+    .apply(lambda x: min(x['startTime'])[0:10].replace('-','')
+                     +'-'+max(x['endTime'])[0:10].replace('-',''))
+
+ris_pool = []
+for ind, v in enumerate(visits_aggregation.iteritems()):
+    car = v[0]
+    t_ = v[1]
+    print(ind, car, t_)
+    # if ind < 7:
+    #     continue
+    ret = requests.get(get_report_url % (t_, car), headers=header)
+    if ret.status_code != 200:
+        print('error:', ret.status_code)
+        continue
+    if len(ret.text) < 10:
+        print('error:', len(ret.text))
+        continue
+    reports = json.loads(ret.text)
+    if reports['code']==1:
+        print('error:', reports['msg'])
+        continue
+
+    ris_pool.extend(reports['data'])
+
+    time.sleep(4.0)
+    print(car, 'finish')
+
+    # if ind >2:
+    #     break
+
+df_rises = pd.DataFrame(ris_pool)
+df_rises.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_rises.xlsx')
