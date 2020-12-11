@@ -121,6 +121,7 @@ visits_aggregation = df_visits[['cn','startTime','endTime']].groupby('cn')\
     .apply(lambda x: min(x['startTime'])[0:10].replace('-','')
                      +'-'+max(x['endTime'])[0:10].replace('-',''))
 
+## 获取报告内容
 ris_pool = []
 for ind, v in enumerate(visits_aggregation.iteritems()):
     car = v[0]
@@ -150,3 +151,29 @@ for ind, v in enumerate(visits_aggregation.iteritems()):
 
 df_rises = pd.DataFrame(ris_pool)
 df_rises.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_rises.xlsx')
+
+###############################################
+# 临时工作
+import pandas as pd
+import requests, json
+import time
+import numpy as np
+
+np.round(np.abs(np.random.normal(6, 4)), 2)
+
+excel = 'C:\\Users\\fakeQ\Desktop\\research_sx_er_test_patient.xlsx'
+
+header = {'Content-Type': 'application/json'}
+get_p_info = 'https://baby3.drims.cn/map/getOracle?viewName=et_patientinfo&cardNo=%s'
+
+get_records = 'https://baby3.drims.cn/map/getOracle?viewName=et_sfxx&cardNo=%s'
+
+
+
+df = pd.read_excel(excel)
+cn = df[['name', 'cardNo']].dropna()
+
+
+
+ret = requests.get(get_p_info % ('060021192275'), headers=header)
+reports = json.loads(ret.text)
