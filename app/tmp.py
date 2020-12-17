@@ -181,7 +181,7 @@ reports = json.loads(ret.text)
 
 ######ris补充############################
 ret = requests.get('https://baby3.drims.cn/map/getRis?ReportsDateTime=%s&AccessionNumber=%s' %
-                   ('20201212-20201217','DR224438'), headers=header)
+                   ('20201212-20201217','DR224404'), headers=header)
 reports = json.loads(ret.text)
 reports
 
