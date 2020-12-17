@@ -177,3 +177,19 @@ cn = df[['name', 'cardNo']].dropna()
 
 ret = requests.get(get_p_info % ('060021192275'), headers=header)
 reports = json.loads(ret.text)
+
+
+######ris补充############################
+ret = requests.get('https://baby3.drims.cn/map/getRis?ReportsDateTime=%s&AccessionNumber=%s' %
+                   ('20201212-20201217','DR224438'), headers=header)
+reports = json.loads(ret.text)
+reports
+
+# if reports['code']==1:
+#     print('error:', reports['msg'])
+#     continue
+
+ris_pool.extend(reports['data'])
+
+df_rises = pd.DataFrame(ris_pool)
+df_rises.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_rises.xlsx')
