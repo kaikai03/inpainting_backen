@@ -180,16 +180,34 @@ reports = json.loads(ret.text)
 
 
 ######ris补充############################
-ret = requests.get('https://baby3.drims.cn/map/getRis?ReportsDateTime=%s&AccessionNumber=%s' %
-                   ('20201212-20201217','DR224404'), headers=header)
-reports = json.loads(ret.text)
-reports
+abs(np.random.normal(10,6))
+int(abs(np.random.normal(2,2))+1)
+
+accession = 37659
+
+tmp = []
+for x in range(100):
+    accession+= 1
+    print('MR'+str(accession))
+    ret = requests.get('https://baby3.drims.cn/map/getRis?ReportsDateTime=%s&AccessionNumber=%s' %
+                       ('20201108-20201218','MR'+str(accession)), headers=header)
+    reports = json.loads(ret.text)
+    # reports
+    if len(ret.text) < 30:
+        print('error:', len(ret.text))
+        continue
+    tmp.extend(reports['data'])
+    print(reports['data'][0]['ReportsDateTime'])
+    print(reports['data'][0]['ReportsConclusion'])
+    print(reports['data'][0]['ReportsEvidences'])
+    time.sleep(abs(np.random.normal(10,6)))
+
 
 # if reports['code']==1:
 #     print('error:', reports['msg'])
 #     continue
 
-ris_pool.extend(reports['data'])
+ris_pool.extend(tmp)
 
 df_rises = pd.DataFrame(ris_pool)
 df_rises.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_rises.xlsx')
