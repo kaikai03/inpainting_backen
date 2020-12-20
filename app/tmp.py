@@ -50,7 +50,7 @@ with open('C:\\Users\\fakeQ\\Desktop\\deal_items.txt', 'w') as f:
 
 
 ###############################################
-# 临时工作
+# 临时工作 先心统计
 import pandas as pd
 pd.set_option('display.max_columns', 40)
 pd.set_option('display.width', 300)
@@ -66,7 +66,7 @@ for item in indexes:
 
 
 ###############################################
-# 临时工作
+# 临时工作 ris
 import pandas as pd
 import requests, json
 import time
@@ -153,7 +153,7 @@ df_rises = pd.DataFrame(ris_pool)
 df_rises.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_rises.xlsx')
 
 ###############################################
-# 临时工作
+# 临时工作 patientinfo
 import pandas as pd
 import requests, json
 import time
