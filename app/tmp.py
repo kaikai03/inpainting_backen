@@ -4,7 +4,7 @@ import requests, json
 import pandas as pd
 
 pd.set_option('display.max_columns', 40)
-pd.set_option('display.width', 300)
+pd.set_option('display.width', 3000)
 
 excel = 'C:\\Users\\fakeQ\\Desktop\\心超报告语义分析后的数据.xlsx'
 df = pd.read_excel(excel)
@@ -211,3 +211,27 @@ ris_pool.extend(tmp)
 
 df_rises = pd.DataFrame(ris_pool)
 df_rises.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_rises.xlsx')
+
+
+df_rises[['ReportsDateTime','ReportsConclusion','ReportsEvidences']]
+
+
+#####################页面解析
+from bs4 import BeautifulSoup
+
+
+with open('C:\\Users\\fakeQ\\Desktop\\页面\\行为.html', 'r') as f:
+    contents = f.read()
+
+
+soup = BeautifulSoup(contents, "html.parser")
+
+for tag in soup.find_all('div', class_='action-month'):
+    classification,month = tag['id'].split('_')
+    classification = 'rd_scale_action_'+ classification.replace('Month','')
+    print(tag)
+
+    item = tag.find_all('div', class_='title-div')
+    month = item['id']
+
+    break
