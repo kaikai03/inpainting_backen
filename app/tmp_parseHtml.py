@@ -714,8 +714,13 @@ for tag in soup.find_all('div', class_='sleep-normal'):
             tmp_str = '['
             for label in labels:
                 input_ = label.find('input')
+                try:
+                    input_value = int(input_['value'])
+                except:
+                    input_value = '"'+input_['value']+'"'
+
                 tmp_str = tmp_str + '{"lable":"' + label.get_text().replace('\n', '').replace(' ','') + '",'
-                tmp_str = tmp_str + '"value":' + input_['value'] + ',' + '"type":2},'
+                tmp_str = tmp_str + '"value":' + str(input_value) + ',' + '"type":2},'
 
                 topicField = input_['name']
             tmp_str = tmp_str + ']'
@@ -724,7 +729,7 @@ for tag in soup.find_all('div', class_='sleep-normal'):
             titile = quest.find('span', class_='title-font').get_text().replace('\n', '')
             type_ = 1
             topicField = quest.find('input')['name']
-            tmp_str = '[{"lable":"","value":"","unit":"","type":"1"}]'
+            tmp_str = '[{"lable":"","value":"","unit":"","type":1}]'
 
         print(index, '|', titile, '|', type_, '|', 'rd_scale_sleeping', '|', tmp_str, '|',
               topicField, '|', index, '|', age)
@@ -735,3 +740,34 @@ for tag in soup.find_all('div', class_='sleep-normal'):
     break
 
 
+####################################心理预警征
+with open('C:\\Users\\fakeQ\\Desktop\\页面\\心理预警征.html', 'r') as f:
+    contents = f.read()
+
+soup = BeautifulSoup(contents, "html.parser")
+
+index = 0
+for tag in soup.find_all('div', class_='waring-normal'):
+    # print(tag)
+    age = tag['id'].replace('month','')
+
+    for quest in tag.find_all('div', class_='title-div'):
+        titile = quest.find('div', class_='title-font').get_text()
+        # print(titile)
+        labels = quest.find_all('label')
+
+        tmp_str = '['
+        for label in labels:
+            input_ = label.find('input')
+            tmp_str = tmp_str + '{"lable":"' + label.get_text().replace('\n', '').replace(' ', '') + '",'
+            tmp_str = tmp_str + '"value":' + input_['value'] + ',' + '"type":2},'
+
+            topicField = input_['name']
+        tmp_str = tmp_str + ']'
+
+        print(index, '|', titile, '|', 2, '|', 'rd_scale_warning', '|', tmp_str, '|',
+              topicField, '|', index, '|', age)
+        index += 1
+
+    # print('\n')
+    break
