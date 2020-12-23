@@ -625,6 +625,69 @@ for tag in soup.find_all('div', class_='title-div'):
 
     break
 
+####################################语言亲自互动
 
+with open('C:\\Users\\fakeQ\\Desktop\\页面\\语言亲自互动.html', 'r') as f:
+    contents = f.read()
 
+soup = BeautifulSoup(contents, "html.parser")
 
+index = 0
+for tag in soup.find_all('div', class_='language-normal'):
+    # print(tag)
+    age = tag['id'].replace('-content','').replace('language','')
+
+    for quest in tag.find_all('div', class_='title-div'):
+        titile = quest.find('div', class_='title-font').get_text()
+        # print(titile)
+        labels = quest.find_all('label')
+
+        tmp_str = '['
+        for label in labels:
+            input_ = label.find('input')
+            tmp_str = tmp_str + '{"lable":"' + label.get_text().replace('\n', '') + '",'
+            tmp_str = tmp_str + '"value":' + input_['value'] + ',' + '"type":2},'
+
+            topicField = input_['name']
+        tmp_str = tmp_str + ']'
+
+        print(index, '|', titile, '|', 2, '|', 'rd_scale_language', '|', tmp_str, '|',
+              topicField, '|', index, '|', age)
+        index += 1
+
+    # print('\n')
+
+    break
+
+####################################运动评估
+with open('C:\\Users\\fakeQ\\Desktop\\页面\\运动.html', 'r') as f:
+    contents = f.read()
+
+soup = BeautifulSoup(contents, "html.parser")
+
+index = 0
+for tag in soup.find_all('div', class_='sport-normal'):
+    # print(tag)
+    age = tag['id'].replace('sport','')
+
+    for quest in tag.find_all('div', class_='title-div'):
+        titile = quest.find('div', class_='title-font').get_text()
+        # print(titile)
+        labels = quest.find_all('label')
+
+        tmp_str = '['
+        for label in labels:
+            input_ = label.find('input')
+            tmp_str = tmp_str + '{"lable":"' + label.get_text().replace('\n', '') + '",'
+            tmp_str = tmp_str + '"value":' + input_['value'] + ',' + '"type":2},'
+
+            topicField = input_['name']
+        tmp_str = tmp_str + ']'
+
+        print(index, '|', titile, '|', 2, '|', 'rd_scale_sport', '|', tmp_str, '|',
+              topicField, '|', index, '|', age)
+        index += 1
+
+    # print('\n')
+
+    break
