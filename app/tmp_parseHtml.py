@@ -691,3 +691,47 @@ for tag in soup.find_all('div', class_='sport-normal'):
     # print('\n')
 
     break
+
+####################################睡眠评估
+with open('C:\\Users\\fakeQ\\Desktop\\页面\\睡眠.html', 'r') as f:
+    contents = f.read()
+
+soup = BeautifulSoup(contents, "html.parser")
+
+index = 0
+for tag in soup.find_all('div', class_='sleep-normal'):
+    # print(tag)
+    age = tag['id'].replace('sleep-content', '')
+
+    for quest in tag.find_all('div', class_='title-div'):
+
+        btn_group= quest.find('div', class_='btn-group')
+        type_ = None
+        if btn_group is not None:
+            titile = quest.find('div', class_='title-font').get_text().replace('\n', '').replace(' ','')
+            labels = quest.find_all('label')
+            type_ = 2
+            tmp_str = '['
+            for label in labels:
+                input_ = label.find('input')
+                tmp_str = tmp_str + '{"lable":"' + label.get_text().replace('\n', '').replace(' ','') + '",'
+                tmp_str = tmp_str + '"value":' + input_['value'] + ',' + '"type":2},'
+
+                topicField = input_['name']
+            tmp_str = tmp_str + ']'
+
+        else:
+            titile = quest.find('span', class_='title-font').get_text().replace('\n', '')
+            type_ = 1
+            topicField = quest.find('input')['name']
+            tmp_str = '[{"lable":"","value":"","unit":"","type":"1"}]'
+
+        print(index, '|', titile, '|', type_, '|', 'rd_scale_sleeping', '|', tmp_str, '|',
+              topicField, '|', index, '|', age)
+        index += 1
+
+    print('\n')
+
+    break
+
+
