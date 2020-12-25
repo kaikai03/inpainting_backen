@@ -2,6 +2,8 @@
 # 临时工作
 import requests, json
 import pandas as pd
+import time
+import numpy as np
 
 pd.set_option('display.max_columns', 40)
 pd.set_option('display.width', 3000)
@@ -69,7 +71,7 @@ for item in indexes:
 # 临时工作 ris
 import pandas as pd
 import requests, json
-import time
+
 
 excel = 'C:\\Users\\fakeQ\Desktop\\research_sx_er_test_patient.xlsx'
 
@@ -157,7 +159,7 @@ df_rises.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_rises.xlsx')
 import pandas as pd
 import requests, json
 import time
-import numpy as np
+
 
 np.round(np.abs(np.random.normal(6, 4)), 2)
 
@@ -232,8 +234,8 @@ visits_aggregation2 = df_visits[['cn','startTime','endTime']].groupby('cn')\
 lis_error = []
 lis_pool = []
 for ind, v in enumerate(visits_aggregation2.iteritems()):
-    # if ind > 3:
-    #     break
+    if ind == 0:
+        continue
 
     car = v[0]
     t_ = v[1]
@@ -245,10 +247,11 @@ for ind, v in enumerate(visits_aggregation2.iteritems()):
         print('error:', ret.status_code)
         lis_error.append((0, car, ret.status_code,ret.text))
         continue
-    if len(ret.text) < 20:
+    if len(ret.text) < 40:
         print('error:', len(ret.text))
         lis_error.append((0, car, ret.status_code, ret.text))
-        if ret.text == None:
+        if reports['code']==1 and reports['msg']==None:
+            print('retry----')
             ret = requests.get(get_lis_report % (car, t_[0], t_[1]), headers=header)
             if ret.status_code != 200:
                 print('error:', ret.status_code)
@@ -270,18 +273,36 @@ for ind, v in enumerate(visits_aggregation2.iteritems()):
     print('step1:---------------')
     for report in lis_reports:
         ret = requests.get(get_lis_detail % (report['BGDH']), headers=header)
+        print(ret.text)
         if ret.status_code != 200:
-            print('error:', ret.status_code)
+            print('error1:', report['BGDH'], ret.status_code)
             lis_error.append((0, car, ret.status_code, ret.text))
             continue
-        if len(ret.text) < 20:
-            print('error:', len(ret.text))
+        if len(ret.text) < 10:
+            print('error2:', report['BGDH'], len(ret.text))
             lis_error.append((0, car, ret.status_code, ret.text))
             continue
+
         details = json.loads(ret.text)
+
+        if details['code'] == 1 and details['msg'] == None:
+            print('retry----', report['BGDH'])
+            time.sleep(5)
+            ret = requests.get(get_lis_detail % (report['BGDH']), headers=header)
+            print(ret.text)
+            details = json.loads(ret.text)
+            if ret.status_code != 200:
+                print('error3:', report['BGDH'], ret.status_code)
+                lis_error.append((0, car, ret.status_code, ret.text))
+                continue
+            if len(ret.text) < 20:
+                print('error4:', report['BGDH'], ret.status_code)
+                lis_error.append((0, car, ret.status_code, ret.text))
+                continue
+
         if details['code'] != 0:
-            print('error:', details['msg'])
-            lis_error.append((0, car, details['code'], details['msg']))
+            print('error5:', report['BGDH'], details)
+            lis_error.append((0, car, details['code'], details))
             continue
 
         lis_details = details['data']
@@ -289,7 +310,9 @@ for ind, v in enumerate(visits_aggregation2.iteritems()):
             for key in report.keys():
                 detail[key] = report[key]
 
-    lis_pool.extend(lis_details)
+        lis_pool.extend(lis_details)
+        print(report['BGDH'],'sucess')
+        time.sleep(1)
 
     time.sleep(abs(np.random.normal(15,6)))
     print(car, 'finish')
@@ -300,6 +323,4 @@ df_lises = pd.DataFrame(lis_pool)
 df_lises.to_excel('C:\\Users\\fakeQ\Desktop\\er_test_lises.xlsx')
 
 
-['A05258150','F28863775','B34169480','A00950041','A03026399','A000300380430','A06429687','A00169183','A41672463',
-'B33912156','B34319768','B32317144','B49363056','B000900075191','B34567921','A10971911','A06574833','A42841687',
-'A08128343']
+
