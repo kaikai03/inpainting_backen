@@ -20,4 +20,4 @@
 ##redis##
 
     docker pull redis
-    docker run -itd -p 5673:6379  --name rds  redis  --requirepass "root1"
+    docker run -itd -p 5673:6379  --name rds  redis  --requirepass "Adminixxx"
